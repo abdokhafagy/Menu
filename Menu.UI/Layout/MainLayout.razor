@@ -1,0 +1,90 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+
+<MudLayout Class="app-shell">
+    <MudAppBar Elevation="0" Dense="true" Class="app-navbar">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" Class="app-navbar__menu-btn" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="app-navbar__brand">Menu Management</MudText>
+        <MudSpacer />
+        <div class="app-navbar__actions">
+            <ThemeToggle />
+            <LanguageToggle />
+            <MudButton StartIcon="@Icons.Material.Filled.Logout" Color="Color.Secondary" Variant="Variant.Text" Class="app-navbar__logout" OnClick="LogoutAsync">
+                Logout
+            </MudButton>
+        </div>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Never"
+               Variant="DrawerVariant.Responsive"
+               Breakpoint="Breakpoint.Md"
+               Anchor="@(AppState.IsRtl ? Anchor.End : Anchor.Start)"
+               Elevation="0"
+               Class="app-drawer">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="content-wrap">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    [Inject] private Services.AuthService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private State.AppState AppState { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += HandleAppStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            var isMobile = await JSRuntime.InvokeAsync<bool>("menuUi.isMobileViewport");
+            if (isMobile)
+            {
+                _drawerOpen = false;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // Ignore viewport detection failures; desktop behavior remains intact.
+        }
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task LogoutAsync()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/login", true);
+    }
+
+    private void HandleAppStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= HandleAppStateChanged;
+    }
+}

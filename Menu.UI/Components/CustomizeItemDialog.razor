@@ -1,0 +1,300 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.h5">@Item.Name</MudText>
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Base @Item.Price.ToString("0.00")</MudChip>
+            </MudStack>
+
+            @if (!string.IsNullOrWhiteSpace(Item.Description))
+            {
+                <MudText Typo="Typo.body2" Class="public-menu-muted">@Item.Description</MudText>
+            }
+
+            @foreach (var option in Item.Options.OrderBy(o => o.Name))
+            {
+                var selectedCount = CountSelected(option.Id);
+                <MudPaper Class="public-option-panel pa-3" Elevation="0">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.subtitle1">@option.Name</MudText>
+                        <MudText Typo="Typo.caption" Class="public-menu-muted">@GetSelectionHint(option, selectedCount)</MudText>
+                    </MudStack>
+
+                    @if (IsSingleSelection(option))
+                    {
+                        <MudRadioGroup T="Guid?"
+                                       Value="@GetSingleSelection(option.Id)"
+                                       ValueChanged="value => SetSingleSelection(option, value)">
+                            @foreach (var value in option.Values.OrderBy(v => v.DisplayOrder).ThenBy(v => v.Value))
+                            {
+                                <MudRadio T="Guid?" Value="@value.Id" Color="Color.Primary">
+                                    @GetValueLabel(value)
+                                </MudRadio>
+                            }
+                        </MudRadioGroup>
+                    }
+                    else
+                    {
+                        @foreach (var value in option.Values.OrderBy(v => v.DisplayOrder).ThenBy(v => v.Value))
+                        {
+                            <MudCheckBox T="bool"
+                                         Value="@IsMultiSelected(option.Id, value.Id)"
+                                         ValueChanged="isSelected => ToggleMultiSelection(option, value, isSelected)"
+                                         Disabled="@IsMultiSelectionLocked(option, value.Id)">
+                                @GetValueLabel(value)
+                            </MudCheckBox>
+                        }
+                    }
+                </MudPaper>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_validationMessage))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">@_validationMessage</MudAlert>
+            }
+
+            <MudPaper Class="public-total-panel pa-3" Elevation="0">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle1">Total</MudText>
+                    <MudText Typo="Typo.h6">@CurrentTotal.ToString("0.00")</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="ConfirmAsync">
+            Add To Cart
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter, EditorRequired] public PublicMenuItemDetailDto Item { get; set; } = default!;
+
+    private readonly Dictionary<Guid, HashSet<Guid>> _selectedValuesByOption = new();
+    private string? _validationMessage;
+
+    protected override void OnInitialized()
+    {
+        InitializeDefaults();
+    }
+
+    private void InitializeDefaults()
+    {
+        foreach (var option in Item.Options)
+        {
+            var selected = option.Values
+                .Where(v => v.IsDefault)
+                .OrderBy(v => v.DisplayOrder)
+                .Select(v => v.Id)
+                .ToHashSet();
+
+            var max = GetEffectiveMax(option);
+            if (selected.Count > max)
+            {
+                selected = selected.Take(max).ToHashSet();
+            }
+
+            if (IsSingleSelection(option) && selected.Count > 1)
+            {
+                selected = selected.Take(1).ToHashSet();
+            }
+
+            _selectedValuesByOption[option.Id] = selected;
+        }
+    }
+
+    private decimal CurrentTotal
+    {
+        get
+        {
+            var modifiers = Item.Options
+                .SelectMany(option => option.Values
+                    .Where(value => _selectedValuesByOption.TryGetValue(option.Id, out var set) && set.Contains(value.Id))
+                    .Select(value => value.PriceModifier))
+                .Sum();
+
+            return Item.Price + modifiers;
+        }
+    }
+
+    private static bool IsSingleSelection(PublicItemOptionDto option)
+        => string.Equals(option.SelectionType, "Single", StringComparison.OrdinalIgnoreCase);
+
+    private static int GetEffectiveMax(PublicItemOptionDto option)
+    {
+        if (IsSingleSelection(option))
+        {
+            return 1;
+        }
+
+        return option.MaxSelections <= 0 ? int.MaxValue : option.MaxSelections;
+    }
+
+    private static int GetEffectiveMin(PublicItemOptionDto option)
+    {
+        var min = Math.Max(0, option.MinSelections);
+        if (option.IsRequired)
+        {
+            min = Math.Max(1, min);
+        }
+
+        return min;
+    }
+
+    private int CountSelected(Guid optionId)
+        => _selectedValuesByOption.TryGetValue(optionId, out var values) ? values.Count : 0;
+
+    private Guid? GetSingleSelection(Guid optionId)
+    {
+        if (!_selectedValuesByOption.TryGetValue(optionId, out var values) || values.Count == 0)
+        {
+            return null;
+        }
+
+        return values.First();
+    }
+
+    private void SetSingleSelection(PublicItemOptionDto option, Guid? valueId)
+    {
+        var selected = GetOrCreateSelection(option.Id);
+        selected.Clear();
+
+        if (valueId.HasValue)
+        {
+            selected.Add(valueId.Value);
+        }
+
+        _validationMessage = null;
+    }
+
+    private bool IsMultiSelected(Guid optionId, Guid valueId)
+    {
+        return _selectedValuesByOption.TryGetValue(optionId, out var values) && values.Contains(valueId);
+    }
+
+    private bool IsMultiSelectionLocked(PublicItemOptionDto option, Guid valueId)
+    {
+        if (IsSingleSelection(option))
+        {
+            return false;
+        }
+
+        var selected = GetOrCreateSelection(option.Id);
+        if (selected.Contains(valueId))
+        {
+            return false;
+        }
+
+        return selected.Count >= GetEffectiveMax(option);
+    }
+
+    private void ToggleMultiSelection(PublicItemOptionDto option, PublicOptionValueDto value, bool isSelected)
+    {
+        var selected = GetOrCreateSelection(option.Id);
+        if (isSelected)
+        {
+            if (selected.Count < GetEffectiveMax(option))
+            {
+                selected.Add(value.Id);
+            }
+        }
+        else
+        {
+            selected.Remove(value.Id);
+        }
+
+        _validationMessage = null;
+    }
+
+    private HashSet<Guid> GetOrCreateSelection(Guid optionId)
+    {
+        if (!_selectedValuesByOption.TryGetValue(optionId, out var set))
+        {
+            set = new HashSet<Guid>();
+            _selectedValuesByOption[optionId] = set;
+        }
+
+        return set;
+    }
+
+    private string GetSelectionHint(PublicItemOptionDto option, int selectedCount)
+    {
+        var min = GetEffectiveMin(option);
+        var max = GetEffectiveMax(option);
+        var maxText = max == int.MaxValue ? "Any" : max.ToString();
+
+        return $"Selected {selectedCount} | Min {min} | Max {maxText}";
+    }
+
+    private static string GetValueLabel(PublicOptionValueDto value)
+    {
+        var modifier = value.PriceModifier;
+        var modifierText = modifier == 0
+            ? "No extra"
+            : modifier > 0
+                ? $"+{modifier:0.00}"
+                : $"{modifier:0.00}";
+
+        return $"{value.Value} ({modifierText})";
+    }
+
+    private async Task ConfirmAsync()
+    {
+        _validationMessage = ValidateSelections();
+        if (!string.IsNullOrWhiteSpace(_validationMessage))
+        {
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(CreateCartLine()));
+        await Task.CompletedTask;
+    }
+
+    private string? ValidateSelections()
+    {
+        foreach (var option in Item.Options)
+        {
+            var selectedCount = CountSelected(option.Id);
+            var min = GetEffectiveMin(option);
+            var max = GetEffectiveMax(option);
+
+            if (selectedCount < min)
+            {
+                return $"{option.Name}: select at least {min}.";
+            }
+
+            if (selectedCount > max)
+            {
+                return $"{option.Name}: select at most {max}.";
+            }
+        }
+
+        return null;
+    }
+
+    private CartLine CreateCartLine()
+    {
+        var selectedDetails = Item.Options
+            .SelectMany(option => option.Values
+                .Where(value => _selectedValuesByOption.TryGetValue(option.Id, out var set) && set.Contains(value.Id))
+                .Select(value => new CartLineSelection(option.Id, option.Name, value.Id, value.Value, value.PriceModifier)))
+            .ToList();
+
+        return new CartLine(
+            Guid.NewGuid(),
+            Item.Id,
+            Item.Name,
+            Item.Price,
+            CurrentTotal,
+            1,
+            selectedDetails);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

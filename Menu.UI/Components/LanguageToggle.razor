@@ -1,0 +1,13 @@
+<MudButtonGroup Variant="Variant.Outlined" Color="Color.Secondary" Class="app-language-toggle">
+    <MudButton Variant='@(AppState.Culture == "en" ? Variant.Filled : Variant.Outlined)' OnClick='@(() => SetLanguageAsync("en"))'>EN</MudButton>
+    <MudButton Variant='@(AppState.Culture == "ar" ? Variant.Filled : Variant.Outlined)' OnClick='@(() => SetLanguageAsync("ar"))'>AR</MudButton>
+</MudButtonGroup>
+
+@code {
+    [Inject] private State.AppState AppState { get; set; } = default!;
+
+    private Task SetLanguageAsync(string value)
+    {
+        return AppState.SetCultureAsync(value);
+    }
+}

@@ -1,0 +1,107 @@
+@page "/register"
+@layout AuthLayout
+@attribute [Authorize]
+
+<PageTitle>Register</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">Create User</MudText>
+<MudText Typo="Typo.body2" Class="mb-4">Admin-only form to add another user.</MudText>
+
+<MudForm @ref="_form" Model="_model">
+    <MudTextField Label="Username" @bind-Value="_model.Username" Required="true" />
+    <MudTextField Label="Email" @bind-Value="_model.Email" Required="true" />
+    <MudTextField Label="Full Name" @bind-Value="_model.FullName" />
+    <MudSelect T="Guid?" Label="Restaurant" @bind-Value="_selectedRestaurantId" Required="true" Disabled="_loadingRestaurants">
+        @if (_restaurants.Count == 0)
+        {
+            <MudSelectItem T="Guid?" Value="@((Guid?)null)">No restaurants found</MudSelectItem>
+        }
+        else
+        {
+            @foreach (var restaurant in _restaurants)
+            {
+                <MudSelectItem T="Guid?" Value="@restaurant.Id">@restaurant.Name</MudSelectItem>
+            }
+        }
+    </MudSelect>
+    <MudTextField Label="Password" @bind-Value="_model.Password" InputType="InputType.Password" Required="true" />
+    <MudTextField Label="Confirm Password" @bind-Value="_model.ConfirmPassword" InputType="InputType.Password" Required="true" />
+
+    <MudButton OnClick="OnSubmitAsync" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4" Disabled="_busy">
+        @(_busy ? "Registering..." : "Create Account")
+    </MudButton>
+</MudForm>
+
+<MudButton Variant="Variant.Text" Color="Color.Secondary" FullWidth="true" Href="/users" Class="mt-2">
+    Back to Users
+</MudButton>
+
+@code {
+    [Inject] private AuthService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private bool _loadingRestaurants = true;
+    private Guid? _selectedRestaurantId;
+    private List<RestaurantDto> _restaurants = new();
+    private RegisterRequest _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _restaurants = (await AuthService.GetRestaurantsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load restaurants: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loadingRestaurants = false;
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        if (!_selectedRestaurantId.HasValue)
+        {
+            Snackbar.Add("Please select a restaurant.", Severity.Error);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            _model.RestaurantId = _selectedRestaurantId.Value;
+            var response = await AuthService.RegisterAsync(_model);
+            if (response is null)
+            {
+                Snackbar.Add("Registration failed.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Registration successful.", Severity.Success);
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

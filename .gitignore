@@ -1,0 +1,56 @@
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Logs
+*.log
+logs/
+
+# NuGet
+*.nupkg
+packages/
+!**/packages/build/
+
+# .NET
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.obj
+*.lib
+*.manifest
+
+# ASP.NET / IIS
+wwwroot/uploads/
+
+# Environment / secrets
+.env
+.env.*
+appsettings.Local.json
+appsettings.*.local.json
+
+# OS generated
+.DS_Store
+Thumbs.db

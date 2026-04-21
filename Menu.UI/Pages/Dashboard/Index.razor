@@ -1,0 +1,44 @@
+@page "/"
+@attribute [Authorize]
+
+<PageTitle>Dashboard</PageTitle>
+
+<PageHeader Title="Dashboard" SubTitle="Quick overview of your menu management workspace" />
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="Restaurants" Value="@_restaurants.ToString()" Icon="@Icons.Material.Filled.Store" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="Users" Value="@_users.ToString()" Icon="@Icons.Material.Filled.People" Color="Color.Secondary" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="Menus" Value="@_menus.ToString()" Icon="@Icons.Material.Filled.MenuBook" Color="Color.Info" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="Items" Value="@_items.ToString()" Icon="@Icons.Material.Filled.Fastfood" Color="Color.Success" /></MudItem>
+</MudGrid>
+
+<LoadingOverlay Visible="@_loading" />
+
+@code {
+    [Inject] private RestaurantService RestaurantService { get; set; } = default!;
+    [Inject] private UserService UserService { get; set; } = default!;
+    [Inject] private MenuService MenuService { get; set; } = default!;
+    [Inject] private MenuItemService MenuItemService { get; set; } = default!;
+
+    private bool _loading = true;
+    private int _restaurants;
+    private int _users;
+    private int _menus;
+    private int _items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var q = new QueryParameters { PageNumber = 1, PageSize = 10 };
+            _restaurants = (await RestaurantService.GetAllAsync(q))?.TotalCount ?? 0;
+            _users = (await UserService.GetAllAsync(q))?.TotalCount ?? 0;
+            _menus = (await MenuService.GetAllAsync(q))?.TotalCount ?? 0;
+            _items = (await MenuItemService.GetAllAsync(q))?.TotalCount ?? 0;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

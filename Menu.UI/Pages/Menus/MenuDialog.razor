@@ -1,0 +1,94 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="2" Class="crud-form-stack">
+            <MudTextField Label="Name" @bind-Value="_name" Required="true" />
+            <MudSelect T="Guid?" Label="Restaurant" @bind-Value="_restaurantId" Required="true" Disabled="_loadingRestaurants">
+                @foreach (var restaurant in _restaurants)
+                {
+                    <MudSelectItem T="Guid?" Value="@restaurant.Id">@restaurant.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSwitch T="bool" Label="Active" Color="Color.Primary" Class="dialog-toggle" @bind-Value="_isActive" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_busy">@(_busy ? "Saving..." : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public MenuDto? Menu { get; set; }
+
+    [Inject] private MenuService Service { get; set; } = default!;
+    [Inject] private RestaurantService RestaurantService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private bool _loadingRestaurants = true;
+    private string _name = string.Empty;
+    private Guid? _restaurantId;
+    private bool _isActive = true;
+    private List<RestaurantDto> _restaurants = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Menu is not null)
+        {
+            _name = Menu.Name;
+            _restaurantId = Menu.RestaurantId;
+            _isActive = Menu.IsActive;
+        }
+
+        var result = await RestaurantService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
+        _restaurants = result?.Data.ToList() ?? new List<RestaurantDto>();
+        _loadingRestaurants = false;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        if (!_restaurantId.HasValue)
+        {
+            Snackbar.Add("Please select a restaurant.", Severity.Error);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (Menu is null)
+            {
+                await Service.CreateAsync(new CreateMenuRequest(_name, _isActive, _restaurantId.Value));
+            }
+            else
+            {
+                await Service.UpdateAsync(Menu.Id, new UpdateMenuRequest(_name, _isActive));
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

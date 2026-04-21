@@ -1,0 +1,148 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="2" Class="crud-form-stack">
+            <MudTextField Label="Username" @bind-Value="_username" Required="true" />
+            <MudTextField Label="Email" @bind-Value="_email" Required="true" />
+            <MudTextField Label="Full Name" @bind-Value="_fullName" />
+            @if (!_isEditMode)
+            {
+                <MudTextField Label="Password" @bind-Value="_password" InputType="InputType.Password" Required="true" />
+            }
+            <MudSelect T="Guid?" Label="Restaurant" @bind-Value="_restaurantId" Required="true" Disabled="_loadingRestaurants">
+                @if (_restaurants.Count == 0)
+                {
+                    <MudSelectItem T="Guid?" Value="@((Guid?)null)">No restaurants available</MudSelectItem>
+                }
+                else
+                {
+                    @foreach (var restaurant in _restaurants)
+                    {
+                        <MudSelectItem T="Guid?" Value="@restaurant.Id">@restaurant.Name</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            <MudSwitch T="bool" Label="Active" Color="Color.Primary" Class="dialog-toggle" @bind-Value="_isActive" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_busy">@(_busy ? "Saving..." : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public UserDto? User { get; set; }
+
+    [Inject] private UserService UserService { get; set; } = default!;
+    [Inject] private RestaurantService RestaurantService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private bool _loadingRestaurants = true;
+
+    private string _username = string.Empty;
+    private string _email = string.Empty;
+    private string? _fullName;
+    private string _password = string.Empty;
+    private bool _isActive = true;
+    private Guid? _restaurantId;
+    private List<RestaurantDto> _restaurants = new();
+    private bool _isEditMode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isEditMode = User is not null;
+        if (User is not null)
+        {
+            _username = User.Username;
+            _email = User.Email;
+            _fullName = User.FullName;
+            _isActive = User.IsActive;
+            _restaurantId = User.RestaurantId;
+        }
+
+        try
+        {
+            var result = await RestaurantService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
+            _restaurants = result?.Data.ToList() ?? new List<RestaurantDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load restaurants: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingRestaurants = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        if (!_restaurantId.HasValue)
+        {
+            Snackbar.Add("Please select a restaurant.", Severity.Error);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (_isEditMode)
+            {
+                var updated = await UserService.UpdateAsync(User!.Id, new UpdateUserRequest(_username, _email, _fullName, _isActive, _restaurantId.Value));
+                if (updated is null)
+                {
+                    Snackbar.Add("Failed to update user.", Severity.Error);
+                    return;
+                }
+            }
+            else
+            {
+                var request = new CreateUserRequest(
+                    _username,
+                    _email,
+                    _password,
+                    _fullName,
+                    _isActive,
+                    _restaurantId.Value);
+
+                var created = await UserService.CreateAsync(request);
+                if (created is null)
+                {
+                    Snackbar.Add("Failed to create user.", Severity.Error);
+                    return;
+                }
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

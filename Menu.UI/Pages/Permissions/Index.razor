@@ -1,0 +1,115 @@
+@page "/permissions"
+@attribute [Authorize]
+
+<PageTitle>Permissions</PageTitle>
+
+<PageHeader Title="Permissions" SubTitle="System permission catalog">
+    <Actions>
+        <AuthorizeView Roles="superadmin" Context="authState">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Permission</MudButton>
+        </AuthorizeView>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="panel pa-4">
+    <MudTable @ref="_table" T="PermissionDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Module</MudTh>
+            <MudTh>Description</MudTh>
+            <AuthorizeView Roles="superadmin" Context="authState">
+                <MudTh>Actions</MudTh>
+            </AuthorizeView>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Module</MudTd>
+            <MudTd>@context.Description</MudTd>
+            <AuthorizeView Roles="superadmin" Context="authState">
+                <MudTd>
+                    <MudStack Row="true" Spacing="1" Class="entity-actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                    </MudStack>
+                </MudTd>
+            </AuthorizeView>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] private PermissionService Service { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudTable<PermissionDto>? _table;
+    private bool _loading = true;
+    private IReadOnlyList<PermissionDto> _rows = Array.Empty<PermissionDto>();
+
+    private async Task<TableData<PermissionDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        try
+        {
+            var result = await Service.GetAllAsync(new QueryParameters { PageNumber = state.Page + 1, PageSize = state.PageSize }, cancellationToken);
+            _rows = result?.Data ?? Array.Empty<PermissionDto>();
+            return new TableData<PermissionDto> { Items = _rows, TotalItems = result?.TotalCount ?? 0 };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OpenCreateAsync()
+    {
+        var dialog = await DialogService.ShowAsync<PermissionDialog>("Add Permission", new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await RefreshAsync();
+            Snackbar.Add("Permission created.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditAsync(PermissionDto permission)
+    {
+        var parameters = new DialogParameters { [nameof(PermissionDialog.Permission)] = permission };
+        var dialog = await DialogService.ShowAsync<PermissionDialog>("Edit Permission", parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await RefreshAsync();
+            Snackbar.Add("Permission updated.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAsync(PermissionDto permission)
+    {
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Permission", new DialogParameters
+        {
+            ["Title"] = "Delete Permission",
+            ["Message"] = $"Delete permission '{permission.Name}'? This cannot be undone.",
+            ["ConfirmText"] = "Delete"
+        });
+
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await Service.DeleteAsync(permission.Id);
+            await RefreshAsync();
+            Snackbar.Add("Permission deleted.", Severity.Success);
+        }
+    }
+}

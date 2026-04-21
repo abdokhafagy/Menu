@@ -1,0 +1,82 @@
+@page "/login"
+@layout AuthLayout
+@attribute [AllowAnonymous]
+
+<PageTitle>Login</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">Welcome Back</MudText>
+<MudText Typo="Typo.body2" Class="mb-4">Sign in to continue managing menus.</MudText>
+
+<MudForm @ref="_form" Model="_model">
+    <MudTextField Label="Email" For="() => _model.Email" @bind-Value="_model.Email" Required="true" />
+    <MudTextField Label="Password" For="() => _model.Password" @bind-Value="_model.Password" InputType="InputType.Password" Required="true" />
+
+    <MudButton OnClick="OnSubmitAsync" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4" Disabled="_busy">
+        @(_busy ? "Signing in..." : "Sign In")
+    </MudButton>
+</MudForm>
+
+@code {
+    [Inject] private AuthService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Parameter] public string? ReturnUrl { get; set; }
+
+    private MudForm? _form;
+    private bool _busy;
+    private LoginRequest _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _model.Device = await GetDeviceAsync();
+    }
+
+    private async Task<string> GetDeviceAsync()
+    {
+        try
+        {
+            var device = await JSRuntime.InvokeAsync<string>("menuUi.getDevice");
+            return string.IsNullOrWhiteSpace(device) ? "web" : device;
+        }
+        catch
+        {
+            return "web";
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        _busy = true;
+        try
+        {
+            var response = await AuthService.LoginAsync(_model);
+            if (response is null)
+            {
+                Snackbar.Add("Login failed.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Login successful.", Severity.Success);
+            NavigationManager.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : "/" + ReturnUrl.TrimStart('/'));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,138 @@
+@page "/restaurants"
+@attribute [Authorize]
+
+<PageTitle>Restaurants</PageTitle>
+
+<PageHeader Title="Restaurants" SubTitle="Manage restaurant workspaces">
+    <Actions>
+        <AuthorizeView Roles="superadmin" Context="authState">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Restaurant</MudButton>
+        </AuthorizeView>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="panel pa-4">
+    <MudTable @ref="_table" T="RestaurantDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+        <HeaderContent>
+            <MudTh>Logo</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Address</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @if (!string.IsNullOrWhiteSpace(context.LogoUrl))
+                {
+                    <MudImage Src="@context.LogoUrl" Alt="@context.Name" Width="40" Height="40" Style="object-fit:cover;border-radius:50%;" />
+                }
+                else
+                {
+                    <MudAvatar Size="Size.Medium">@context.Name[..1].ToUpperInvariant()</MudAvatar>
+                }
+            </MudTd>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Phone</MudTd>
+            <MudTd>@context.Address</MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? "Active" : "Inactive")</MudChip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Class="entity-actions">
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.OpenInNew"
+                               Href="@($"/public/restaurants/{context.Id}/menu")"
+                               Target="_blank"
+                               Rel="noopener noreferrer">
+                        View Menu
+                    </MudButton>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                    </AuthorizeView>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] private RestaurantService Service { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudTable<RestaurantDto>? _table;
+    private bool _loading = true;
+    private IReadOnlyList<RestaurantDto> _rows = Array.Empty<RestaurantDto>();
+
+    private async Task<TableData<RestaurantDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        try
+        {
+            var result = await Service.GetAllAsync(new QueryParameters { PageNumber = state.Page + 1, PageSize = state.PageSize }, cancellationToken);
+            _rows = result?.Data ?? Array.Empty<RestaurantDto>();
+            return new TableData<RestaurantDto> { Items = _rows, TotalItems = result?.TotalCount ?? 0 };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OpenCreateAsync()
+    {
+        var dialog = await DialogService.ShowAsync<RestaurantDialog>("Add Restaurant", new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await RefreshAsync();
+            Snackbar.Add("Restaurant created.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditAsync(RestaurantDto restaurant)
+    {
+        var parameters = new DialogParameters { [nameof(RestaurantDialog.Restaurant)] = restaurant };
+        var dialog = await DialogService.ShowAsync<RestaurantDialog>("Edit Restaurant", parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await RefreshAsync();
+            Snackbar.Add("Restaurant updated.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAsync(RestaurantDto restaurant)
+    {
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Restaurant", new DialogParameters
+        {
+            ["Title"] = "Delete Restaurant",
+            ["Message"] = $"Delete restaurant '{restaurant.Name}'? This cannot be undone.",
+            ["ConfirmText"] = "Delete"
+        });
+
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await Service.DeleteAsync(restaurant.Id);
+            await RefreshAsync();
+            Snackbar.Add("Restaurant deleted.", Severity.Success);
+        }
+    }
+
+}

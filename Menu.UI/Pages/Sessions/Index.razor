@@ -1,0 +1,61 @@
+@page "/sessions"
+@attribute [Authorize]
+
+<PageTitle>Sessions</PageTitle>
+
+<PageHeader Title="Sessions" SubTitle="Monitor and revoke active sessions" />
+
+<MudPaper Class="panel pa-4">
+    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
+        <HeaderContent>
+            <MudTh>Device</MudTh>
+            <MudTh>IP Address</MudTh>
+            <MudTh>Expires</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Device</MudTd>
+            <MudTd>@context.IpAddress</MudTd>
+            <MudTd>@context.ExpiresAt.ToLocalTime().ToString("g")</MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@(context.IsRevoked ? Color.Error : Color.Success)">@(context.IsRevoked ? "Revoked" : "Active")</MudChip>
+            </MudTd>
+            <MudTd>
+                @if (!context.IsRevoked)
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(context.Id)">
+                        Revoke
+                    </MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] private AuthService AuthService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private bool _loading = true;
+    private IReadOnlyList<SessionInfo> _rows = Array.Empty<SessionInfo>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _rows = await AuthService.GetSessionsAsync();
+        _loading = false;
+    }
+
+    private async Task RevokeAsync(Guid sessionId)
+    {
+        await AuthService.RevokeSessionAsync(sessionId);
+        Snackbar.Add("Session revoked.", Severity.Success);
+        await LoadAsync();
+    }
+}

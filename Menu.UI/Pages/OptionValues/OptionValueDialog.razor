@@ -1,0 +1,103 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="2" Class="crud-form-stack">
+            <MudTextField Label="Value" @bind-Value="_value" Required="true" />
+            <MudTextField Label="Value AR" @bind-Value="_valueAr" />
+            <MudNumericField T="decimal" Label="Price Modifier" @bind-Value="_priceModifier" Required="true" />
+            <MudSwitch T="bool" Label="Default" Color="Color.Primary" Class="dialog-toggle" @bind-Value="_isDefault" />
+            <MudNumericField T="int" Label="Display Order" @bind-Value="_displayOrder" Required="true" />
+            <MudSelect T="Guid?" Label="Item Option" @bind-Value="_itemOptionId" Required="true" Disabled="_loadingItemOptions">
+                @foreach (var itemOption in _itemOptions)
+                {
+                    <MudSelectItem T="Guid?" Value="@itemOption.Id">@itemOption.Name</MudSelectItem>
+                }
+            </MudSelect>
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_busy">@(_busy ? "Saving..." : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public OptionValueDto? OptionValue { get; set; }
+
+    [Inject] private OptionValueService Service { get; set; } = default!;
+    [Inject] private ItemOptionService ItemOptionService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private bool _loadingItemOptions = true;
+    private string _value = string.Empty;
+    private string? _valueAr;
+    private decimal _priceModifier;
+    private bool _isDefault;
+    private int _displayOrder;
+    private Guid? _itemOptionId;
+    private List<ItemOptionDto> _itemOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (OptionValue is not null)
+        {
+            _value = OptionValue.Value;
+            _valueAr = OptionValue.ValueAr;
+            _priceModifier = OptionValue.PriceModifier;
+            _isDefault = OptionValue.IsDefault;
+            _displayOrder = OptionValue.DisplayOrder;
+            _itemOptionId = OptionValue.ItemOptionId;
+        }
+
+        var result = await ItemOptionService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
+        _itemOptions = result?.Data.ToList() ?? new List<ItemOptionDto>();
+        _loadingItemOptions = false;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        if (!_itemOptionId.HasValue)
+        {
+            Snackbar.Add("Please select an item option.", Severity.Error);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (OptionValue is null)
+            {
+                await Service.CreateAsync(new CreateOptionValueRequest(_value, _valueAr, _priceModifier, _isDefault, _displayOrder, _itemOptionId.Value));
+            }
+            else
+            {
+                await Service.UpdateAsync(OptionValue.Id, new UpdateOptionValueRequest(_value, _valueAr, _priceModifier, _isDefault, _displayOrder));
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

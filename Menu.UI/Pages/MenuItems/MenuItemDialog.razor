@@ -1,0 +1,453 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="3" Class="crud-form-stack">
+                <MudPaper Class="panel pa-4 menu-item-builder__section" Elevation="0">
+                    <MudStack Spacing="2">
+                        <div class="menu-item-builder__header">
+                            <MudText Typo="Typo.h6">Menu Item Details</MudText>
+                            <MudText Typo="Typo.body2" Class="public-menu-muted">Enter the base item first, then attach options and values below.</MudText>
+                        </div>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField Label="Name" @bind-Value="_name" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField Label="Name AR" @bind-Value="_nameAr" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField Label="Description" @bind-Value="_description" Lines="3" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField Label="Description AR" @bind-Value="_descriptionAr" Lines="3" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudNumericField T="decimal" Label="Price" @bind-Value="_price" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudNumericField T="int" Label="Display Order" @bind-Value="_displayOrder" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="Guid?" Label="Category" @bind-Value="_categoryId" Required="true" Disabled="_loadingCategories">
+                                    @foreach (var category in _categories)
+                                    {
+                                        <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Item Image</MudText>
+                                    <InputFile OnChange="OnImageSelectedAsync" accept="image/png,image/jpeg,image/jpg,image/webp" />
+                                    <MudText Typo="Typo.caption" Class="public-menu-muted">Allowed: JPG, PNG, WEBP. Max 2 MB.</MudText>
+                                    @if (_uploadingImage)
+                                    {
+                                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(_imageUrl))
+                                    {
+                                        <MudPaper Class="pa-2 menu-item-builder__image" Elevation="0">
+                                            <MudImage Src="@_imageUrl" Alt="Item Preview" Width="120" Height="120" Style="object-fit:cover;border-radius:12px;" />
+                                            <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="ClearImage">Remove Image</MudButton>
+                                        </MudPaper>
+                                    }
+                                </MudStack>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudSwitch T="bool" Label="Available" Color="Color.Primary" Class="dialog-toggle" @bind-Value="_isAvailable" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudStack>
+                </MudPaper>
+
+                @if (MenuItem is null)
+                {
+                    <MudPaper Class="panel pa-4 menu-item-builder__section" Elevation="0">
+                        <MudStack Spacing="2">
+                            <div class="menu-item-builder__header menu-item-builder__header--split">
+                                <div>
+                                    <MudText Typo="Typo.h6">Item Options</MudText>
+                                    <MudText Typo="Typo.body2" Class="public-menu-muted">Add groups such as tea type, then create the selectable values for each group.</MudText>
+                                </div>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddOption" Disabled="_busy || _uploadingImage">
+                                    Add Option
+                                </MudButton>
+                            </div>
+
+                            @if (_options.Count == 0)
+                            {
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                    No option groups yet. Add one to begin building the customization flow.
+                                </MudAlert>
+                            }
+
+                            @for (var optionIndex = 0; optionIndex < _options.Count; optionIndex++)
+                            {
+                                var option = _options[optionIndex];
+                                var optionToRemove = option;
+
+                                <MudPaper Class="menu-item-builder__card pa-4" Elevation="0">
+                                    <MudStack Spacing="2">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <div>
+                                                <MudText Typo="Typo.subtitle1">Option @(optionIndex + 1)</MudText>
+                                                <MudText Typo="Typo.caption" Class="public-menu-muted">Example: tea type, size, or add-on group.</MudText>
+                                            </div>
+                                            <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveOption(optionToRemove)" Disabled="_busy || _uploadingImage" />
+                                        </MudStack>
+
+                                        <MudGrid>
+                                            <MudItem xs="12" md="6">
+                                                <MudTextField Label="Option Name" @bind-Value="option.Name" Required="true" />
+                                            </MudItem>
+                                            <MudItem xs="12" md="6">
+                                                <MudTextField Label="Option Name AR" @bind-Value="option.NameAr" />
+                                            </MudItem>
+                                            <MudItem xs="12" md="4">
+                                                <MudSwitch T="bool" Label="Required" Color="Color.Primary" Class="dialog-toggle" @bind-Value="option.IsRequired" />
+                                            </MudItem>
+                                            <MudItem xs="12" md="4">
+                                                <MudNumericField T="int" Label="Min Selections" @bind-Value="option.MinSelections" Required="true" />
+                                            </MudItem>
+                                            <MudItem xs="12" md="4">
+                                                <MudNumericField T="int" Label="Max Selections" @bind-Value="option.MaxSelections" Required="true" />
+                                            </MudItem>
+                                            <MudItem xs="12" md="4">
+                                                <MudSelect T="SelectionType" Label="Selection Type" @bind-Value="option.SelectionType">
+                                                    <MudSelectItem T="SelectionType" Value="SelectionType.Single">Single</MudSelectItem>
+                                                    <MudSelectItem T="SelectionType" Value="SelectionType.Multiple">Multiple</MudSelectItem>
+                                                </MudSelect>
+                                            </MudItem>
+                                        </MudGrid>
+
+                                        <MudDivider />
+
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <div>
+                                                <MudText Typo="Typo.subtitle2">Option Values</MudText>
+                                                <MudText Typo="Typo.caption" Class="public-menu-muted">Add the selectable values for this option group.</MudText>
+                                            </div>
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => AddValue(option)" Disabled="_busy || _uploadingImage">
+                                                Add Value
+                                            </MudButton>
+                                        </MudStack>
+
+                                        @if (option.Values.Count == 0)
+                                        {
+                                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                                No values added yet.
+                                            </MudAlert>
+                                        }
+
+                                        @for (var valueIndex = 0; valueIndex < option.Values.Count; valueIndex++)
+                                        {
+                                            var value = option.Values[valueIndex];
+                                            var valueToRemove = value;
+
+                                            <MudPaper Class="menu-item-builder__subcard pa-3" Elevation="0">
+                                                <MudStack Spacing="2">
+                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                        <MudText Typo="Typo.body2">Value @(valueIndex + 1)</MudText>
+                                                        <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveValue(option, valueToRemove)" Disabled="_busy || _uploadingImage" />
+                                                    </MudStack>
+
+                                                    <MudGrid>
+                                                        <MudItem xs="12" md="4">
+                                                            <MudTextField Label="Value" @bind-Value="value.Value" Required="true" />
+                                                        </MudItem>
+                                                        <MudItem xs="12" md="4">
+                                                            <MudTextField Label="Value AR" @bind-Value="value.ValueAr" />
+                                                        </MudItem>
+                                                        <MudItem xs="12" md="2">
+                                                            <MudNumericField T="int" Label="Display Order" @bind-Value="value.DisplayOrder" Required="true" />
+                                                        </MudItem>
+                                                        <MudItem xs="12" md="2">
+                                                            <MudNumericField T="decimal" Label="Price" @bind-Value="value.PriceModifier" Required="true" />
+                                                        </MudItem>
+                                                        <MudItem xs="12">
+                                                            <MudSwitch T="bool" Label="Default" Color="Color.Primary" Class="dialog-toggle" @bind-Value="value.IsDefault" />
+                                                        </MudItem>
+                                                    </MudGrid>
+                                                </MudStack>
+                                            </MudPaper>
+                                        }
+                                    </MudStack>
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        This edit dialog updates the menu item details only. Manage item options and option values from the dedicated pages.
+                    </MudAlert>
+                }
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_busy || _uploadingImage">@(_busy ? "Saving..." : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public MenuItemDto? MenuItem { get; set; }
+
+    [Inject] private MenuItemService Service { get; set; } = default!;
+    [Inject] private ItemOptionService ItemOptionService { get; set; } = default!;
+    [Inject] private OptionValueService OptionValueService { get; set; } = default!;
+    [Inject] private CategoryService CategoryService { get; set; } = default!;
+    [Inject] private ImageUploadService ImageUploadService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private bool _loadingCategories = true;
+    private string _name = string.Empty;
+    private string? _nameAr;
+    private string? _description;
+    private string? _descriptionAr;
+    private decimal _price;
+    private string? _imageUrl;
+    private bool _isAvailable = true;
+    private int _displayOrder;
+    private Guid? _categoryId;
+    private List<CategoryDto> _categories = new();
+    private bool _uploadingImage;
+    private readonly List<OptionEditorModel> _options = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (MenuItem is not null)
+        {
+            _name = MenuItem.Name;
+            _nameAr = MenuItem.NameAr;
+            _description = MenuItem.Description;
+            _descriptionAr = MenuItem.DescriptionAr;
+            _price = MenuItem.Price;
+            _imageUrl = MenuItem.ImageUrl;
+            _isAvailable = MenuItem.IsAvailable;
+            _displayOrder = MenuItem.DisplayOrder;
+            _categoryId = MenuItem.CategoryId;
+        }
+
+        var result = await CategoryService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
+        _categories = result?.Data.ToList() ?? new List<CategoryDto>();
+        _loadingCategories = false;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        if (!_categoryId.HasValue)
+        {
+            Snackbar.Add("Please select a category.", Severity.Error);
+            return;
+        }
+
+        if (MenuItem is null && !ValidateOptionDrafts())
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (MenuItem is null)
+            {
+                var createdItem = await Service.CreateAsync(new CreateMenuItemRequest(_name, _nameAr, _description, _descriptionAr, _price, _imageUrl, _isAvailable, _displayOrder, _categoryId.Value));
+                if (createdItem is null)
+                {
+                    throw new InvalidOperationException("The item could not be created.");
+                }
+
+                foreach (var option in _options)
+                {
+                    var createdOption = await ItemOptionService.CreateAsync(new CreateItemOptionRequest(option.Name.Trim(), option.NameAr, option.IsRequired, option.MinSelections, option.MaxSelections, option.SelectionType, createdItem.Id));
+                    if (createdOption is null)
+                    {
+                        throw new InvalidOperationException($"The option '{option.Name}' could not be created.");
+                    }
+
+                    foreach (var value in option.Values.OrderBy(value => value.DisplayOrder))
+                    {
+                        var createdValue = await OptionValueService.CreateAsync(new CreateOptionValueRequest(value.Value.Trim(), value.ValueAr, value.PriceModifier, value.IsDefault, value.DisplayOrder, createdOption.Id));
+                        if (createdValue is null)
+                        {
+                            throw new InvalidOperationException($"The value '{value.Value}' could not be created.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                await Service.UpdateAsync(MenuItem.Id, new UpdateMenuItemRequest(_name, _nameAr, _description, _descriptionAr, _price, _imageUrl, _isAvailable, _displayOrder));
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnImageSelectedAsync(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        if (!ImageUploadService.IsValidImageType(file.ContentType))
+        {
+            Snackbar.Add("Only JPG, PNG, and WEBP images are allowed.", Severity.Error);
+            return;
+        }
+
+        if (!ImageUploadService.IsValidImageSize(file.Size))
+        {
+            Snackbar.Add("Image size must be 2 MB or less.", Severity.Error);
+            return;
+        }
+
+        _uploadingImage = true;
+        try
+        {
+            _imageUrl = await ImageUploadService.UploadImageAsync(file);
+            Snackbar.Add("Image uploaded successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _uploadingImage = false;
+        }
+    }
+
+    private void ClearImage()
+    {
+        _imageUrl = null;
+    }
+
+    private void AddOption()
+    {
+        _options.Add(new OptionEditorModel
+        {
+            IsRequired = true,
+            MinSelections = 1,
+            MaxSelections = 1,
+            SelectionType = SelectionType.Single,
+            Values =
+            [
+                new OptionValueEditorModel { DisplayOrder = 1 }
+            ]
+        });
+    }
+
+    private void RemoveOption(OptionEditorModel option)
+    {
+        _options.Remove(option);
+    }
+
+    private void AddValue(OptionEditorModel option)
+    {
+        option.Values.Add(new OptionValueEditorModel
+        {
+            DisplayOrder = option.Values.Count + 1
+        });
+    }
+
+    private void RemoveValue(OptionEditorModel option, OptionValueEditorModel value)
+    {
+        option.Values.Remove(value);
+    }
+
+    private bool ValidateOptionDrafts()
+    {
+        if (_options.Count == 0)
+        {
+            Snackbar.Add("Add at least one option group before saving.", Severity.Error);
+            return false;
+        }
+
+        foreach (var option in _options)
+        {
+            if (string.IsNullOrWhiteSpace(option.Name))
+            {
+                Snackbar.Add("Each option group needs a name.", Severity.Error);
+                return false;
+            }
+
+            if (option.MinSelections < 0)
+            {
+                Snackbar.Add($"Option '{option.Name}' must have a minimum selection of zero or more.", Severity.Error);
+                return false;
+            }
+
+            if (option.MaxSelections < option.MinSelections)
+            {
+                Snackbar.Add($"Option '{option.Name}' must allow at least the minimum number of selections.", Severity.Error);
+                return false;
+            }
+
+            if (option.Values.Count == 0)
+            {
+                Snackbar.Add($"Add at least one value for option '{option.Name}'.", Severity.Error);
+                return false;
+            }
+
+            foreach (var value in option.Values)
+            {
+                if (string.IsNullOrWhiteSpace(value.Value))
+                {
+                    Snackbar.Add($"Each value in option '{option.Name}' needs a label.", Severity.Error);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private sealed class OptionEditorModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? NameAr { get; set; }
+        public bool IsRequired { get; set; } = true;
+        public int MinSelections { get; set; } = 1;
+        public int MaxSelections { get; set; } = 1;
+        public SelectionType SelectionType { get; set; } = SelectionType.Single;
+        public List<OptionValueEditorModel> Values { get; set; } = new();
+    }
+
+    private sealed class OptionValueEditorModel
+    {
+        public string Value { get; set; } = string.Empty;
+        public string? ValueAr { get; set; }
+        public decimal PriceModifier { get; set; }
+        public bool IsDefault { get; set; }
+        public int DisplayOrder { get; set; }
+    }
+}

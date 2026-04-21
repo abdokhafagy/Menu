@@ -1,0 +1,151 @@
+@page "/users"
+@attribute [Authorize]
+
+<PageTitle>Users</PageTitle>
+
+<PageHeader Title="Users" SubTitle="Review application users">
+    <Actions>
+        <AuthorizeView Roles="superadmin" Context="authState">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreateDialogAsync">
+                Add User
+            </MudButton>
+        </AuthorizeView>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="panel pa-4">
+    <MudTable @ref="_table" T="UserDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+        <HeaderContent>
+            <MudTh>Username</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Full Name</MudTh>
+            <MudTh>Restaurant</MudTh>
+            <MudTh>Status</MudTh>
+            <AuthorizeView Roles="superadmin" Context="authState">
+                <MudTh>Actions</MudTh>
+            </AuthorizeView>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Username</MudTd>
+            <MudTd>@context.Email</MudTd>
+            <MudTd>@context.FullName</MudTd>
+            <MudTd>@(context.RestaurantName ?? "-")</MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? "Active" : "Inactive")</MudChip>
+            </MudTd>
+            <AuthorizeView Roles="superadmin" Context="authState">
+                <MudTd>
+                    <MudStack Row="true" Spacing="1" Class="entity-actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialogAsync(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                    </MudStack>
+                </MudTd>
+            </AuthorizeView>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] private UserService Service { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudTable<UserDto>? _table;
+    private bool _loading = true;
+    private IReadOnlyList<UserDto> _rows = Array.Empty<UserDto>();
+
+    private async Task<TableData<UserDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        try
+        {
+            var result = await Service.GetAllAsync(new QueryParameters { PageNumber = state.Page + 1, PageSize = state.PageSize }, cancellationToken);
+            _rows = result?.Data ?? Array.Empty<UserDto>();
+            return new TableData<UserDto>
+            {
+                Items = _rows,
+                TotalItems = result?.TotalCount ?? 0
+            };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OpenCreateDialogAsync()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Create User", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled)
+        {
+            return;
+        }
+
+        await RefreshAsync();
+        Snackbar.Add("User created successfully.", Severity.Success);
+    }
+
+    private async Task OpenEditDialogAsync(UserDto user)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(CreateUserDialog.User)] = user
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Edit User", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        });
+
+        var result = await dialog.Result;
+        if (result is null || result.Canceled)
+        {
+            return;
+        }
+
+        await RefreshAsync();
+        Snackbar.Add("User updated successfully.", Severity.Success);
+    }
+
+    private async Task DeleteAsync(UserDto user)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Title"] = "Delete User",
+            ["Message"] = $"Delete user '{user.Username}'? This cannot be undone.",
+            ["ConfirmText"] = "Delete"
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete User", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled)
+        {
+            return;
+        }
+
+        await Service.DeleteAsync(user.Id);
+        await RefreshAsync();
+        Snackbar.Add("User deleted.", Severity.Success);
+    }
+}

@@ -1,0 +1,76 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="2" Class="crud-form-stack">
+            <MudTextField Label="Name" @bind-Value="_name" Required="true" />
+            <MudTextField Label="Description" @bind-Value="_description" Lines="3" />
+            <MudTextField Label="Module" @bind-Value="_module" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_busy">@(_busy ? "Saving..." : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public PermissionDto? Permission { get; set; }
+
+    [Inject] private PermissionService Service { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private string _name = string.Empty;
+    private string? _description;
+    private string? _module;
+
+    protected override void OnInitialized()
+    {
+        if (Permission is not null)
+        {
+            _name = Permission.Name;
+            _description = Permission.Description;
+            _module = Permission.Module;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        _busy = true;
+        try
+        {
+            if (Permission is null)
+            {
+                await Service.CreateAsync(new CreatePermissionRequest(_name, _description, _module));
+            }
+            else
+            {
+                await Service.UpdateAsync(Permission.Id, new UpdatePermissionRequest(_name, _description, _module));
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

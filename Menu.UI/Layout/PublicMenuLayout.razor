@@ -1,0 +1,17 @@
+@inherits LayoutComponentBase
+
+<div class="public-menu-layout">
+    <header class="public-menu-layout__header">
+        <div class="public-menu-layout__brand">
+            <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Size="Size.Medium" />
+            <div>
+                <MudText Typo="Typo.h6">Restaurant Menu</MudText>
+                <MudText Typo="Typo.caption">Guest Read-Only View</MudText>
+            </div>
+        </div>
+    </header>
+
+    <main class="public-menu-layout__main">
+        @Body
+    </main>
+</div>

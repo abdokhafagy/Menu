@@ -1,0 +1,115 @@
+@page "/menus"
+@attribute [Authorize]
+
+<PageTitle>Menus</PageTitle>
+
+<PageHeader Title="Menus" SubTitle="Menus connected to restaurants">
+    <Actions>
+        <AuthorizeView Roles="superadmin" Context="authState">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Menu</MudButton>
+        </AuthorizeView>
+    </Actions>
+</PageHeader>
+
+<MudPaper Class="panel pa-4">
+    <MudTable @ref="_table" T="MenuDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Restaurant</MudTh>
+            <MudTh>Status</MudTh>
+            <AuthorizeView Roles="superadmin" Context="authState">
+                <MudTh>Actions</MudTh>
+            </AuthorizeView>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@(context.RestaurantName ?? "-")</MudTd>
+            <MudTd><MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
+            <AuthorizeView Roles="superadmin" Context="authState">
+                <MudTd>
+                    <MudStack Row="true" Spacing="1" Class="entity-actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                    </MudStack>
+                </MudTd>
+            </AuthorizeView>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] private MenuService Service { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudTable<MenuDto>? _table;
+    private bool _loading = true;
+    private IReadOnlyList<MenuDto> _rows = Array.Empty<MenuDto>();
+
+    private async Task<TableData<MenuDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        try
+        {
+            var result = await Service.GetAllAsync(new QueryParameters { PageNumber = state.Page + 1, PageSize = state.PageSize }, cancellationToken);
+            _rows = result?.Data ?? Array.Empty<MenuDto>();
+            return new TableData<MenuDto> { Items = _rows, TotalItems = result?.TotalCount ?? 0 };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task OpenCreateAsync()
+    {
+        var dialog = await DialogService.ShowAsync<MenuDialog>("Add Menu", new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await RefreshAsync();
+            Snackbar.Add("Menu created.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditAsync(MenuDto menu)
+    {
+        var parameters = new DialogParameters { [nameof(MenuDialog.Menu)] = menu };
+        var dialog = await DialogService.ShowAsync<MenuDialog>("Edit Menu", parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await RefreshAsync();
+            Snackbar.Add("Menu updated.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAsync(MenuDto menu)
+    {
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Menu", new DialogParameters
+        {
+            ["Title"] = "Delete Menu",
+            ["Message"] = $"Delete menu '{menu.Name}'? This cannot be undone.",
+            ["ConfirmText"] = "Delete"
+        });
+
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            await Service.DeleteAsync(menu.Id);
+            await RefreshAsync();
+            Snackbar.Add("Menu deleted.", Severity.Success);
+        }
+    }
+}

@@ -1,0 +1,143 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="2" Class="crud-form-stack">
+            <MudTextField Label="Name" @bind-Value="_name" Required="true" />
+            <MudTextField Label="Description" @bind-Value="_description" Lines="3" />
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.subtitle2">Logo Image</MudText>
+                <InputFile OnChange="OnLogoSelectedAsync" accept="image/png,image/jpeg,image/jpg,image/webp" />
+                <MudText Typo="Typo.caption" Class="public-menu-muted">Allowed: JPG, PNG, WEBP. Max 2 MB.</MudText>
+                @if (_uploadingLogo)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                @if (!string.IsNullOrWhiteSpace(_logoUrl))
+                {
+                    <MudPaper Class="pa-2" Elevation="0">
+                        <MudImage Src="@_logoUrl" Alt="Logo Preview" Width="120" Height="120" Style="object-fit:cover;border-radius:12px;" />
+                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="ClearLogo">Remove Image</MudButton>
+                    </MudPaper>
+                }
+            </MudStack>
+            <MudTextField Label="Address" @bind-Value="_address" />
+            <MudTextField Label="Phone" @bind-Value="_phone" />
+            <MudSwitch T="bool" Label="Active" Color="Color.Primary" Class="dialog-toggle" @bind-Value="_isActive" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="_busy || _uploadingLogo">@(_busy ? "Saving..." : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public RestaurantDto? Restaurant { get; set; }
+
+    [Inject] private RestaurantService Service { get; set; } = default!;
+    [Inject] private ImageUploadService ImageUploadService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private MudForm? _form;
+    private bool _busy;
+    private string _name = string.Empty;
+    private string? _description;
+    private string? _logoUrl;
+    private string? _address;
+    private string? _phone;
+    private bool _isActive = true;
+    private bool _uploadingLogo;
+
+    protected override void OnInitialized()
+    {
+        if (Restaurant is not null)
+        {
+            _name = Restaurant.Name;
+            _description = Restaurant.Description;
+            _logoUrl = Restaurant.LogoUrl;
+            _address = Restaurant.Address;
+            _phone = Restaurant.Phone;
+            _isActive = Restaurant.IsActive;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        _busy = true;
+        try
+        {
+            if (Restaurant is null)
+            {
+                await Service.CreateAsync(new CreateRestaurantRequest(_name, _description, _logoUrl, _address, _phone, _isActive));
+            }
+            else
+            {
+                await Service.UpdateAsync(Restaurant.Id, new UpdateRestaurantRequest(_name, _description, _logoUrl, _address, _phone, _isActive));
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnLogoSelectedAsync(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        if (!ImageUploadService.IsValidImageType(file.ContentType))
+        {
+            Snackbar.Add("Only JPG, PNG, and WEBP images are allowed.", Severity.Error);
+            return;
+        }
+
+        if (!ImageUploadService.IsValidImageSize(file.Size))
+        {
+            Snackbar.Add("Image size must be 2 MB or less.", Severity.Error);
+            return;
+        }
+
+        _uploadingLogo = true;
+        try
+        {
+            _logoUrl = await ImageUploadService.UploadImageAsync(file);
+            Snackbar.Add("Logo uploaded successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _uploadingLogo = false;
+        }
+    }
+
+    private void ClearLogo()
+    {
+        _logoUrl = null;
+    }
+}

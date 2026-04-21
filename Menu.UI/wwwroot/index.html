@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menu Management</title>
+    <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+</head>
+
+<body>
+    <div id="app">
+        <div class="boot-loading">
+            <div class="boot-loading__panel">
+                <div class="boot-loading__logo">M</div>
+                <div class="boot-loading__spinner" aria-hidden="true"></div>
+                <div class="boot-loading__title">Menu Management</div>
+                <div class="boot-loading__subtitle">Loading your workspace...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script>
+        (function () {
+            function normalizeCulture(value) {
+                var raw = (value || "en").toLowerCase();
+                return raw.indexOf("ar") === 0 ? "ar" : "en";
+            }
+
+            var initialCulture = "en";
+            try {
+                initialCulture = normalizeCulture(localStorage.getItem("menu.ui.culture"));
+            } catch {
+                initialCulture = "en";
+            }
+
+            var initialDirection = initialCulture === "ar" ? "rtl" : "ltr";
+            document.documentElement.lang = initialCulture;
+            document.documentElement.dir = initialDirection;
+            if (document.body) {
+                document.body.setAttribute("dir", initialDirection);
+            }
+        })();
+
+        window.menuUi = {
+            getDevice: function () {
+                var agent = navigator.userAgent || "web";
+                var platform = navigator.platform ? " (" + navigator.platform + ")" : "";
+                return agent + platform;
+            },
+            setLanguage: function (culture, direction) {
+                var normalizedCulture = (culture || "en").toLowerCase().indexOf("ar") === 0 ? "ar" : "en";
+                var normalizedDirection = direction || (normalizedCulture === "ar" ? "rtl" : "ltr");
+
+                document.documentElement.lang = normalizedCulture;
+                document.documentElement.dir = normalizedDirection;
+
+                if (document.body) {
+                    document.body.setAttribute("dir", normalizedDirection);
+                }
+            },
+            isMobileViewport: function () {
+                return window.matchMedia("(max-width: 960px)").matches;
+            }
+        };
+    </script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+
+</html>

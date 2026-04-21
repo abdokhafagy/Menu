@@ -1,0 +1,107 @@
+<MudCard Class="public-menu-item-card">
+    <MudCardMedia Image="@GetImageUrl()" Height="180" Class="public-menu-item-media" />
+    <MudCardContent>
+        <MudText Typo="Typo.h6" Class="public-menu-item-title">@Item.Name</MudText>
+        <MudText Typo="Typo.body2" Class="public-menu-item-description">@GetDescription()</MudText>
+
+        @if (Item.Options is { Count: > 0 })
+        {
+            <MudDivider Class="my-3" />
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.caption" Class="public-menu-item-options__label">Options</MudText>
+
+                @foreach (var option in Item.Options.OrderBy(option => option.Name))
+                {
+                    <MudPaper Class="public-menu-item-option pa-2" Elevation="0">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2" Class="public-menu-item-option__title">@option.Name</MudText>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">@GetOptionRuleLabel(option)</MudChip>
+                            </MudStack>
+
+                            <MudStack Row="true" Spacing="1" Class="public-menu-item-option__values">
+                                @foreach (var value in option.Values.OrderBy(value => value.DisplayOrder).ThenBy(value => value.Value))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Primary">
+                                        @GetValueLabel(value)
+                                    </MudChip>
+                                }
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mt-3">
+            <MudText Typo="Typo.subtitle1" Class="public-menu-item-price">@Item.Price.ToString("0.00")</MudText>
+            @if (!Item.IsAvailable)
+            {
+                <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Unavailable</MudChip>
+            }
+        </MudStack>
+    </MudCardContent>
+    @if (!ReadOnlyMode)
+    {
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Disabled="@(!Item.IsAvailable)"
+                       StartIcon="@Icons.Material.Filled.Tune"
+                       OnClick="() => OnCustomize.InvokeAsync(Item)">
+                @(Item.IsAvailable ? "Customize" : "Not Available")
+            </MudButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public PublicMenuItemDto Item { get; set; } = default!;
+    [Parameter] public EventCallback<PublicMenuItemDto> OnCustomize { get; set; }
+    [Parameter] public bool ReadOnlyMode { get; set; }
+
+    private string GetImageUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(Item.ImageUrl))
+        {
+            return Item.ImageUrl;
+        }
+
+        return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80";
+    }
+
+    private string GetDescription()
+    {
+        if (!string.IsNullOrWhiteSpace(Item.Description))
+        {
+            return Item.Description;
+        }
+
+        return "Fresh ingredients prepared to order.";
+    }
+
+    private static string GetOptionRuleLabel(PublicItemOptionDto option)
+    {
+        var isSingle = string.Equals(option.SelectionType, "Single", StringComparison.OrdinalIgnoreCase);
+        if (isSingle)
+        {
+            return option.IsRequired ? "Required · 1 choice" : "Optional · 1 choice";
+        }
+
+        var min = Math.Max(0, option.MinSelections);
+        var max = option.MaxSelections <= 0 ? "Any" : option.MaxSelections.ToString();
+        return option.IsRequired ? $"Required · {min}-{max}" : $"Optional · {min}-{max}";
+    }
+
+    private static string GetValueLabel(PublicOptionValueDto value)
+    {
+        if (value.PriceModifier == 0)
+        {
+            return value.Value;
+        }
+
+        var sign = value.PriceModifier > 0 ? "+" : string.Empty;
+        return $"{value.Value} ({sign}{value.PriceModifier:0.00})";
+    }
+}

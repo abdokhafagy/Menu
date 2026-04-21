@@ -1,0 +1,14 @@
+<MudSwitch T="bool"
+           Color="Color.Secondary"
+           Value="AppState.IsDarkMode"
+           ValueChanged="OnThemeChanged"
+           Label="Dark" />
+
+@code {
+    [Inject] private State.AppState AppState { get; set; } = default!;
+
+    private Task OnThemeChanged(bool isDarkMode)
+    {
+        return AppState.SetDarkModeAsync(isDarkMode);
+    }
+}

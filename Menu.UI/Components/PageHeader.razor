@@ -1,0 +1,19 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4 fade-in">
+    <div>
+        <MudText Typo="Typo.h4" Class="page-title">@Title</MudText>
+        @if (!string.IsNullOrWhiteSpace(SubTitle))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@SubTitle</MudText>
+        }
+    </div>
+    @if (Actions is not null)
+    {
+        <MudStack Row="true" Spacing="2">@Actions</MudStack>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? SubTitle { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}
