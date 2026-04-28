@@ -1,18 +1,23 @@
 @page "/"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>@L["Dashboard.PageTitle"]</PageTitle>
 
-<PageHeader Title="Dashboard" SubTitle="Quick overview of your menu management workspace" />
+<PageHeader Title="@L["Dashboard.PageTitle"]" SubTitle="@L["Dashboard.SubTitle"]" />
 
 <MudGrid>
-    <MudItem xs="12" sm="6" md="3"><StatCard Title="Restaurants" Value="@_restaurants.ToString()" Icon="@Icons.Material.Filled.Store" /></MudItem>
-    <MudItem xs="12" sm="6" md="3"><StatCard Title="Users" Value="@_users.ToString()" Icon="@Icons.Material.Filled.People" Color="Color.Secondary" /></MudItem>
-    <MudItem xs="12" sm="6" md="3"><StatCard Title="Menus" Value="@_menus.ToString()" Icon="@Icons.Material.Filled.MenuBook" Color="Color.Info" /></MudItem>
-    <MudItem xs="12" sm="6" md="3"><StatCard Title="Items" Value="@_items.ToString()" Icon="@Icons.Material.Filled.Fastfood" Color="Color.Success" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Restaurants"]" Value="@_restaurants.ToString()" Icon="@Icons.Material.Filled.Store" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Users"]" Value="@_users.ToString()" Icon="@Icons.Material.Filled.People" Color="Color.Secondary" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Menus"]" Value="@_menus.ToString()" Icon="@Icons.Material.Filled.MenuBook" Color="Color.Info" /></MudItem>
+    <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Items"]" Value="@_items.ToString()" Icon="@Icons.Material.Filled.Fastfood" Color="Color.Success" /></MudItem>
 </MudGrid>
 
-<LoadingOverlay Visible="@_loading" />
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Class="mb-4" />
+    <MudSkeleton Height="120px" Class="mb-4" />
+}
 
 @code {
     [Inject] private RestaurantService RestaurantService { get; set; } = default!;

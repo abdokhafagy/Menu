@@ -1,24 +1,25 @@
 @page "/permissions"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Permissions</PageTitle>
+<PageTitle>@L["Permissions.PageTitle"]</PageTitle>
 
-<PageHeader Title="Permissions" SubTitle="System permission catalog">
+<PageHeader Title="@L["Permissions.PageTitle"]" SubTitle="@L["Permissions.SubTitle"]">
     <Actions>
         <AuthorizeView Roles="superadmin" Context="authState">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Permission</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["Permissions.Add"]</MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable @ref="_table" T="PermissionDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" @ref="_table" T="PermissionDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Module</MudTh>
-            <MudTh>Description</MudTh>
+            <MudTh>@L["Permissions.Name"]</MudTh>
+            <MudTh>@L["Permissions.Module"]</MudTh>
+            <MudTh>@L["Permissions.Description"]</MudTh>
             <AuthorizeView Roles="superadmin" Context="authState">
-                <MudTh>Actions</MudTh>
+                <MudTh>@L["Common.Actions"]</MudTh>
             </AuthorizeView>
         </HeaderContent>
         <RowTemplate>
@@ -38,6 +39,25 @@
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
         </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var permission in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@permission.Name</MudText>
+                    <MudText Typo="Typo.body2">@permission.Module</MudText>
+                    <MudText Typo="Typo.body2">@permission.Description</MudText>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudStack Row="true" Spacing="1" Class="entity-actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(permission)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(permission)" />
+                        </MudStack>
+                    </AuthorizeView>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
@@ -74,34 +94,34 @@
 
     private async Task OpenCreateAsync()
     {
-        var dialog = await DialogService.ShowAsync<PermissionDialog>("Add Permission", new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<PermissionDialog>(L["Permissions.CreateDialogTitle"], new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Permission created.", Severity.Success);
+            Snackbar.Add(L["Permissions.CreatedSuccess"], Severity.Success);
         }
     }
 
     private async Task OpenEditAsync(PermissionDto permission)
     {
         var parameters = new DialogParameters { [nameof(PermissionDialog.Permission)] = permission };
-        var dialog = await DialogService.ShowAsync<PermissionDialog>("Edit Permission", parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<PermissionDialog>(L["Permissions.EditDialogTitle"], parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Permission updated.", Severity.Success);
+            Snackbar.Add(L["Permissions.UpdatedSuccess"], Severity.Success);
         }
     }
 
     private async Task DeleteAsync(PermissionDto permission)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Permission", new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
         {
-            ["Title"] = "Delete Permission",
-            ["Message"] = $"Delete permission '{permission.Name}'? This cannot be undone.",
-            ["ConfirmText"] = "Delete"
+            ["Title"] = L["Permissions.DeleteTitle"],
+            ["Message"] = string.Format(L["Permissions.DeleteMessage"], permission.Name),
+            ["ConfirmText"] = L["Common.Delete"]
         });
 
         var result = await dialog.Result;
@@ -109,7 +129,7 @@
         {
             await Service.DeleteAsync(permission.Id);
             await RefreshAsync();
-            Snackbar.Add("Permission deleted.", Severity.Success);
+            Snackbar.Add(L["Permissions.DeletedSuccess"], Severity.Success);
         }
     }
 }

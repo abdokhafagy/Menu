@@ -1,31 +1,32 @@
 @page "/option-values"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Option Values</PageTitle>
+<PageTitle>@L["OptionValues.PageTitle"]</PageTitle>
 
-<PageHeader Title="Option Values" SubTitle="Selectable values in option groups">
+<PageHeader Title="@L["OptionValues.PageTitle"]" SubTitle="@L["OptionValues.SubTitle"]">
     <Actions>
         <AuthorizeView Roles="superadmin" Context="authState">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Value</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["OptionValues.Add"]</MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable @ref="_table" T="OptionValueDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" @ref="_table" T="OptionValueDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
-            <MudTh>Value</MudTh>
-            <MudTh>Price Delta</MudTh>
-            <MudTh>Default</MudTh>
-            <MudTh>Option</MudTh>
+            <MudTh>@L["OptionValues.Value"]</MudTh>
+            <MudTh>@L["OptionValues.PriceDelta"]</MudTh>
+            <MudTh>@L["OptionValues.Default"]</MudTh>
+            <MudTh>@L["OptionValues.Option"]</MudTh>
             <AuthorizeView Roles="superadmin" Context="authState">
-                <MudTh>Actions</MudTh>
+                <MudTh>@L["Common.Actions"]</MudTh>
             </AuthorizeView>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Value</MudTd>
             <MudTd>@context.PriceModifier</MudTd>
-            <MudTd>@context.IsDefault</MudTd>
+            <MudTd>@(context.IsDefault ? L["Common.Yes"] : L["Common.No"])</MudTd>
             <MudTd>@(context.ItemOptionName ?? "-")</MudTd>
             <AuthorizeView Roles="superadmin" Context="authState">
                 <MudTd>
@@ -40,6 +41,26 @@
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
         </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var optionValue in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@optionValue.Value</MudText>
+                    <MudText Typo="Typo.body2">@L["OptionValues.PriceDelta"]: @optionValue.PriceModifier</MudText>
+                    <MudText Typo="Typo.body2">@L["OptionValues.Default"]: @(optionValue.IsDefault ? L["Common.Yes"] : L["Common.No"])</MudText>
+                    <MudText Typo="Typo.body2">@(optionValue.ItemOptionName ?? "-")</MudText>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudStack Row="true" Spacing="1" Class="entity-actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(optionValue)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(optionValue)" />
+                        </MudStack>
+                    </AuthorizeView>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
@@ -76,34 +97,34 @@
 
     private async Task OpenCreateAsync()
     {
-        var dialog = await DialogService.ShowAsync<OptionValueDialog>("Add Value", new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<OptionValueDialog>(L["OptionValues.CreateDialogTitle"], new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Option value created.", Severity.Success);
+            Snackbar.Add(L["OptionValues.CreatedSuccess"], Severity.Success);
         }
     }
 
     private async Task OpenEditAsync(OptionValueDto optionValue)
     {
         var parameters = new DialogParameters { [nameof(OptionValueDialog.OptionValue)] = optionValue };
-        var dialog = await DialogService.ShowAsync<OptionValueDialog>("Edit Value", parameters, new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<OptionValueDialog>(L["OptionValues.EditDialogTitle"], parameters, new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Option value updated.", Severity.Success);
+            Snackbar.Add(L["OptionValues.UpdatedSuccess"], Severity.Success);
         }
     }
 
     private async Task DeleteAsync(OptionValueDto optionValue)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Value", new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
         {
-            ["Title"] = "Delete Value",
-            ["Message"] = $"Delete option value '{optionValue.Value}'? This cannot be undone.",
-            ["ConfirmText"] = "Delete"
+            ["Title"] = L["OptionValues.DeleteTitle"],
+            ["Message"] = string.Format(L["OptionValues.DeleteMessage"], optionValue.Value),
+            ["ConfirmText"] = L["Common.Delete"]
         });
 
         var result = await dialog.Result;
@@ -111,7 +132,7 @@
         {
             await Service.DeleteAsync(optionValue.Id);
             await RefreshAsync();
-            Snackbar.Add("Option value deleted.", Severity.Success);
+            Snackbar.Add(L["OptionValues.DeletedSuccess"], Severity.Success);
         }
     }
 }

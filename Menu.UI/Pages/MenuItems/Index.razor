@@ -1,26 +1,27 @@
 @page "/menu-items"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Menu Items</PageTitle>
+<PageTitle>@L["MenuItems.PageTitle"]</PageTitle>
 
-<PageHeader Title="Menu Items" SubTitle="Items shown to customers">
+<PageHeader Title="@L["MenuItems.PageTitle"]" SubTitle="@L["MenuItems.SubTitle"]">
     <Actions>
         <AuthorizeView Roles="superadmin" Context="authState">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Item</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["MenuItems.Add"]</MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable @ref="_table" T="MenuItemDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" @ref="_table" T="MenuItemDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
-            <MudTh>Image</MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Price</MudTh>
-            <MudTh>Category</MudTh>
-            <MudTh>Available</MudTh>
+            <MudTh>@L["MenuItems.Image"]</MudTh>
+            <MudTh>@L["MenuItems.Name"]</MudTh>
+            <MudTh>@L["MenuItems.Price"]</MudTh>
+            <MudTh>@L["MenuItems.Category"]</MudTh>
+            <MudTh>@L["MenuItems.Available"]</MudTh>
             <AuthorizeView Roles="superadmin" Context="authState">
-                <MudTh>Actions</MudTh>
+                <MudTh>@L["Common.Actions"]</MudTh>
             </AuthorizeView>
         </HeaderContent>
         <RowTemplate>
@@ -37,7 +38,7 @@
             <MudTd>@context.Name</MudTd>
             <MudTd>@context.Price</MudTd>
             <MudTd>@(context.CategoryName ?? "-")</MudTd>
-            <MudTd><MudChip T="string" Color="@(context.IsAvailable ? Color.Success : Color.Error)">@(context.IsAvailable ? "Yes" : "No")</MudChip></MudTd>
+            <MudTd><MudChip T="string" Color="@(context.IsAvailable ? Color.Success : Color.Error)">@(context.IsAvailable ? L["Common.Yes"] : L["Common.No"])</MudChip></MudTd>
             <AuthorizeView Roles="superadmin" Context="authState">
                 <MudTd>
                     <MudStack Row="true" Spacing="1" Class="entity-actions">
@@ -51,6 +52,26 @@
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
         </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var item in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@item.Name</MudText>
+                    <MudText Typo="Typo.body2">@L["MenuItems.Price"]: @item.Price</MudText>
+                    <MudText Typo="Typo.body2">@(item.CategoryName ?? "-")</MudText>
+                    <MudChip T="string" Color="@(item.IsAvailable ? Color.Success : Color.Error)">@(item.IsAvailable ? L["Common.Yes"] : L["Common.No"])</MudChip>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudStack Row="true" Spacing="1" Class="entity-actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(item)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(item)" />
+                        </MudStack>
+                    </AuthorizeView>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
@@ -87,34 +108,34 @@
 
     private async Task OpenCreateAsync()
     {
-        var dialog = await DialogService.ShowAsync<MenuItemDialog>("Add Item", new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<MenuItemDialog>(L["MenuItems.CreateDialogTitle"], new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Item created.", Severity.Success);
+            Snackbar.Add(L["MenuItems.CreatedSuccess"], Severity.Success);
         }
     }
 
     private async Task OpenEditAsync(MenuItemDto item)
     {
         var parameters = new DialogParameters { [nameof(MenuItemDialog.MenuItem)] = item };
-        var dialog = await DialogService.ShowAsync<MenuItemDialog>("Edit Item", parameters, new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<MenuItemDialog>(L["MenuItems.EditDialogTitle"], parameters, new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Item updated.", Severity.Success);
+            Snackbar.Add(L["MenuItems.UpdatedSuccess"], Severity.Success);
         }
     }
 
     private async Task DeleteAsync(MenuItemDto item)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Item", new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
         {
-            ["Title"] = "Delete Item",
-            ["Message"] = $"Delete item '{item.Name}'? This cannot be undone.",
-            ["ConfirmText"] = "Delete"
+            ["Title"] = L["MenuItems.DeleteTitle"],
+            ["Message"] = string.Format(L["MenuItems.DeleteMessage"], item.Name),
+            ["ConfirmText"] = L["Common.Delete"]
         });
 
         var result = await dialog.Result;
@@ -122,7 +143,7 @@
         {
             await Service.DeleteAsync(item.Id);
             await RefreshAsync();
-            Snackbar.Add("Item deleted.", Severity.Success);
+            Snackbar.Add(L["MenuItems.DeletedSuccess"], Severity.Success);
         }
     }
 }

@@ -1,25 +1,26 @@
 @page "/categories"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Categories</PageTitle>
+<PageTitle>@L["Categories.PageTitle"]</PageTitle>
 
-<PageHeader Title="Categories" SubTitle="Category groups inside menus">
+<PageHeader Title="@L["Categories.PageTitle"]" SubTitle="@L["Categories.SubTitle"]">
     <Actions>
         <AuthorizeView Roles="superadmin" Context="authState">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Category</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["Categories.Add"]</MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable @ref="_table" T="CategoryDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" @ref="_table" T="CategoryDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Name AR</MudTh>
-            <MudTh>Order</MudTh>
-            <MudTh>Menu</MudTh>
+            <MudTh>@L["Categories.Name"]</MudTh>
+            <MudTh>@L["Categories.NameAr"]</MudTh>
+            <MudTh>@L["Categories.Order"]</MudTh>
+            <MudTh>@L["Categories.Menu"]</MudTh>
             <AuthorizeView Roles="superadmin" Context="authState">
-                <MudTh>Actions</MudTh>
+                <MudTh>@L["Common.Actions"]</MudTh>
             </AuthorizeView>
         </HeaderContent>
         <RowTemplate>
@@ -40,6 +41,26 @@
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
         </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var category in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@category.Name</MudText>
+                    <MudText Typo="Typo.body2">@category.NameAr</MudText>
+                    <MudText Typo="Typo.body2">@L["Categories.Order"]: @category.DisplayOrder</MudText>
+                    <MudText Typo="Typo.body2">@(category.MenuName ?? "-")</MudText>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudStack Row="true" Spacing="1" Class="entity-actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(category)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(category)" />
+                        </MudStack>
+                    </AuthorizeView>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
@@ -76,34 +97,34 @@
 
     private async Task OpenCreateAsync()
     {
-        var dialog = await DialogService.ShowAsync<CategoryDialog>("Add Category", new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<CategoryDialog>(L["Categories.CreateDialogTitle"], new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Category created.", Severity.Success);
+            Snackbar.Add(L["Categories.CreatedSuccess"], Severity.Success);
         }
     }
 
     private async Task OpenEditAsync(CategoryDto category)
     {
         var parameters = new DialogParameters { [nameof(CategoryDialog.Category)] = category };
-        var dialog = await DialogService.ShowAsync<CategoryDialog>("Edit Category", parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<CategoryDialog>(L["Categories.EditDialogTitle"], parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Category updated.", Severity.Success);
+            Snackbar.Add(L["Categories.UpdatedSuccess"], Severity.Success);
         }
     }
 
     private async Task DeleteAsync(CategoryDto category)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Category", new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
         {
-            ["Title"] = "Delete Category",
-            ["Message"] = $"Delete category '{category.Name}'? This cannot be undone.",
-            ["ConfirmText"] = "Delete"
+            ["Title"] = L["Categories.DeleteTitle"],
+            ["Message"] = string.Format(L["Categories.DeleteMessage"], category.Name),
+            ["ConfirmText"] = L["Common.Delete"]
         });
 
         var result = await dialog.Result;
@@ -111,7 +132,7 @@
         {
             await Service.DeleteAsync(category.Id);
             await RefreshAsync();
-            Snackbar.Add("Category deleted.", Severity.Success);
+            Snackbar.Add(L["Categories.DeletedSuccess"], Severity.Success);
         }
     }
 }

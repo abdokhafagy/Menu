@@ -1,23 +1,24 @@
 @page "/roles"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Roles</PageTitle>
+<PageTitle>@L["Roles.PageTitle"]</PageTitle>
 
-<PageHeader Title="Roles" SubTitle="Role and access management">
+<PageHeader Title="@L["Roles.PageTitle"]" SubTitle="@L["Roles.SubTitle"]">
     <Actions>
         <AuthorizeView Roles="superadmin" Context="authState">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">Add Role</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["Roles.Add"]</MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable @ref="_table" T="RoleDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" @ref="_table" T="RoleDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Created</MudTh>
+            <MudTh>@L["Roles.Name"]</MudTh>
+            <MudTh>@L["Roles.Created"]</MudTh>
             <AuthorizeView Roles="superadmin" Context="authState">
-                <MudTh>Actions</MudTh>
+                <MudTh>@L["Common.Actions"]</MudTh>
             </AuthorizeView>
         </HeaderContent>
         <RowTemplate>
@@ -36,6 +37,24 @@
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
         </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var role in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@role.Name</MudText>
+                    <MudText Typo="Typo.body2">@L["Roles.Created"]: @role.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</MudText>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudStack Row="true" Spacing="1" Class="entity-actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(role)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(role)" />
+                        </MudStack>
+                    </AuthorizeView>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
@@ -72,34 +91,34 @@
 
     private async Task OpenCreateAsync()
     {
-        var dialog = await DialogService.ShowAsync<RoleDialog>("Add Role", new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<RoleDialog>(L["Roles.CreateDialogTitle"], new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Role created.", Severity.Success);
+            Snackbar.Add(L["Roles.CreatedSuccess"], Severity.Success);
         }
     }
 
     private async Task OpenEditAsync(RoleDto role)
     {
         var parameters = new DialogParameters { [nameof(RoleDialog.Role)] = role };
-        var dialog = await DialogService.ShowAsync<RoleDialog>("Edit Role", parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var dialog = await DialogService.ShowAsync<RoleDialog>(L["Roles.EditDialogTitle"], parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
         var result = await dialog.Result;
         if (result?.Canceled == false)
         {
             await RefreshAsync();
-            Snackbar.Add("Role updated.", Severity.Success);
+            Snackbar.Add(L["Roles.UpdatedSuccess"], Severity.Success);
         }
     }
 
     private async Task DeleteAsync(RoleDto role)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Role", new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
         {
-            ["Title"] = "Delete Role",
-            ["Message"] = $"Delete role '{role.Name}'? This cannot be undone.",
-            ["ConfirmText"] = "Delete"
+            ["Title"] = L["Roles.DeleteTitle"],
+            ["Message"] = string.Format(L["Roles.DeleteMessage"], role.Name),
+            ["ConfirmText"] = L["Common.Delete"]
         });
 
         var result = await dialog.Result;
@@ -107,7 +126,7 @@
         {
             await Service.DeleteAsync(role.Id);
             await RefreshAsync();
-            Snackbar.Add("Role deleted.", Severity.Success);
+            Snackbar.Add(L["Roles.DeletedSuccess"], Severity.Success);
         }
     }
 }

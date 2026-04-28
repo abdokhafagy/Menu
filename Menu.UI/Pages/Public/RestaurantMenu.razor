@@ -1,69 +1,61 @@
 @page "/public/restaurants/{RestaurantId:guid}/menu"
 @attribute [AllowAnonymous]
 @layout PublicMenuLayout
-
-<PageTitle>Restaurant Menu</PageTitle>
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
 <div class="public-menu-page fade-in">
+    @* ── Loading ── *@
     @if (_loading)
     {
-        <MudPaper Class="public-menu-hero panel pa-4 mb-4" Elevation="0">
-            <MudSkeleton Height="34px" Width="40%" />
-            <MudSkeleton Height="18px" Width="65%" Class="mt-3" />
-            <MudSkeleton Height="18px" Width="55%" />
-        </MudPaper>
+        <div class="public-menu-page__hero-skeleton">
+            <div class="skeleton-shimmer public-menu-page__hero-cover" />
+            <div class="public-menu-page__hero-content">
+                <div class="skeleton-shimmer public-menu-page__hero-logo" />
+                <div class="public-menu-page__hero-info">
+                    <MudSkeleton Height="32px" Width="50%" />
+                    <MudSkeleton Height="16px" Width="70%" Class="mt-1" />
+                </div>
+            </div>
+        </div>
 
-        <MudGrid>
+        <div class="public-menu-page__tabs-skeleton">
             @for (var i = 0; i < 6; i++)
             {
-                <MudItem xs="12" sm="6" lg="4">
-                    <MudPaper Class="public-menu-skeleton panel pa-3" Elevation="0">
-                        <MudSkeleton Height="170px" />
-                        <MudSkeleton Height="30px" Width="70%" Class="mt-3" />
-                        <MudSkeleton Height="17px" Width="90%" />
-                        <MudSkeleton Height="17px" Width="76%" />
-                    </MudPaper>
-                </MudItem>
+                <div class="skeleton-shimmer public-menu-page__tab-skeleton" />
             }
-        </MudGrid>
+        </div>
+
+        <div class="public-menu-page__grid">
+            @for (var i = 0; i < 8; i++)
+            {
+                <MenuSkeleton Index="i" />
+            }
+        </div>
     }
+
+    @* ── Error ── *@
     else if (!string.IsNullOrWhiteSpace(_error))
     {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="false">@_error</MudAlert>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" OnClick="ReloadAsync">Retry</MudButton>
+        <div class="public-menu-page__error-wrap">
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="public-menu-page__error">
+                @_error
+            </MudAlert>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" OnClick="ReloadAsync">
+                Try Again
+            </MudButton>
+        </div>
     }
+
+    @* ── Main content ── *@
     else if (_restaurant is not null)
     {
-        <MudPaper Class="public-menu-hero panel pa-4 mb-4" Elevation="0">
-            <MudGrid>
-                <MudItem xs="12" md="8">
-                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                            <MudImage Src="@GetRestaurantLogo()" Alt="@_restaurant.Name" Class="public-menu-restaurant-logo" />
-                        <div>
-                            <MudText Typo="Typo.h4" Class="public-menu-restaurant-title">@_restaurant.Name</MudText>
-                            @if (!string.IsNullOrWhiteSpace(_restaurant.Description))
-                            {
-                                <MudText Typo="Typo.body1" Class="public-menu-muted">@_restaurant.Description</MudText>
-                            }
-                        </div>
-                    </MudStack>
-                </MudItem>
-                @* <MudItem xs="12" md="4">
-                    <MudPaper Class="public-readonly-banner pa-3" Elevation="0">
-                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                            <MudIcon Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info" />
-                            <MudText Typo="Typo.subtitle2" Class="public-readonly-banner__title">Read-Only Digital Menu</MudText>
-                        </MudStack>
-                        <MudText Typo="Typo.body2" Class="public-menu-muted mt-1">
-                            Please share your selection with the garson to place the order.
-                        </MudText>
-                    </MudPaper>
-                </MudItem> *@
-            </MudGrid>
+        <RestaurantHeader Restaurant="_restaurant" />
 
-            @if (_menus.Count > 1)
-            {
-                <MudChipSet T="string" Class="public-menu-tabset mt-4" AllClosable="false">
+        @* Multi-menu chips (if > 1 menu) *@
+        @if (_menus.Count > 1)
+        {
+            <div class="public-menu-page__menu-chips">
+                <MudChipSet T="string" AllClosable="false">
                     @for (var i = 0; i < _menus.Count; i++)
                     {
                         var menu = _menus[i];
@@ -71,83 +63,73 @@
                         <MudChip T="string"
                                  Variant="@(selected ? Variant.Filled : Variant.Outlined)"
                                  Color="@(selected ? Color.Primary : Color.Default)"
-                                 OnClick="() => SelectMenuAsync(i)">
+                                 OnClick="() => SelectMenuAsync(i)"
+                                 Class="public-menu-page__menu-chip">
                             @menu.Name
                         </MudChip>
                     }
                 </MudChipSet>
+            </div>
+        }
+
+        @* Menu loading shimmer *@
+        @if (_loadingMenu)
+        {
+            <div class="public-menu-page__grid mt-4">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <MenuSkeleton Index="i" />
+                }
+            </div>
+        }
+
+        @* Categories + items *@
+        else if (_activeMenu is not null)
+        {
+            @* Sticky horizontal category tabs *@
+            <div class="public-menu-page__sticky-tabs">
+                <CategoryTabs Categories="GetCategories()"
+                              SelectedCategoryId="_selectedCategoryId ?? Guid.Empty"
+                              OnCategorySelected="OnCategorySelected" />
+            </div>
+
+            @* Items grid *@
+            var items = GetItems();
+            if (items.Count == 0)
+            {
+                <EmptyState Title="No items here"
+                            Description="This category has no items yet."
+                            Icon="@Icons.Material.Filled.RestaurantMenu"
+                            IconColor="Color.Default"
+                            Class="public-menu-page__empty" />
             }
-        </MudPaper>
-
-        <MudGrid>
-            <MudItem xs="12" md="3">
-                <MudPaper Class="public-menu-sidebar panel pa-3" Elevation="0">
-                    <MudText Typo="Typo.subtitle1" Class="mb-2">Categories</MudText>
-                    <MudStack Spacing="1">
-                        @foreach (var category in GetCategories())
-                        {
-                            var selected = _selectedCategoryId == category.Id;
-                            <MudChip T="string"
-                                     Variant="@(selected ? Variant.Filled : Variant.Outlined)"
-                                     Color="@(selected ? Color.Primary : Color.Default)"
-                                     OnClick="() => SelectCategory(category.Id)">
-                                @category.Name
-                            </MudChip>
-                        }
-                    </MudStack>
-                </MudPaper>
-            </MudItem>
-            <MudItem xs="12" md="9">
-                <MudPaper Class="public-menu-mobile-categories panel pa-3 mb-3" Elevation="0">
-                    <MudText Typo="Typo.subtitle2" Class="mb-2">Category</MudText>
-                    <MudSelect T="Guid?" Value="_selectedCategoryId" ValueChanged="OnMobileCategoryChanged" Dense="true" Variant="Variant.Outlined" Class="w-100">
-                        @foreach (var category in GetCategories())
-                        {
-                            <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudPaper>
-
-                @if (_loadingMenu)
-                {
-                    <MudGrid>
-                        @for (var i = 0; i < 6; i++)
-                        {
-                            <MudItem xs="12" sm="6" lg="4">
-                                <MudPaper Class="public-menu-skeleton panel pa-3" Elevation="0">
-                                    <MudSkeleton Height="170px" />
-                                    <MudSkeleton Height="30px" Width="70%" Class="mt-3" />
-                                    <MudSkeleton Height="17px" Width="90%" />
-                                    <MudSkeleton Height="17px" Width="76%" />
-                                </MudPaper>
-                            </MudItem>
-                        }
-                    </MudGrid>
-                }
-                else if (GetItems().Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No items found in this category.</MudAlert>
-                }
-                else
-                {
-                    <MudGrid>
-                        @foreach (var item in GetItems())
-                        {
-                            <MudItem xs="12" sm="6" lg="4">
-                                <MenuItemCard Item="item" ReadOnlyMode="true" />
-                            </MudItem>
-                        }
-                    </MudGrid>
-                }
-            </MudItem>
-        </MudGrid>
+            else
+            {
+                <div class="public-menu-page__grid">
+                    @for (var i = 0; i < items.Count; i++)
+                    {
+                        var item = items[i];
+                        <div class="public-menu-page__grid-item">
+                            <MenuItemCard Item="item"
+                                          ReadOnlyMode="true"
+                                          AnimationDelayMs="@(i * 50 % 250)"
+                                          OnItemClick="HandleItemClick" />
+                        </div>
+                    }
+                </div>
+            }
+        }
     }
 </div>
+
+@* Item detail modal — shown only via DialogService.Show *@
 
 @code {
     [Parameter] public Guid RestaurantId { get; set; }
 
     [Inject] private PublicMenuService PublicMenuService { get; set; } = default!;
+    [Inject] private State.AppState AppState { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
 
     private bool _loading = true;
     private bool _loadingMenu;
@@ -158,6 +140,8 @@
     private PublicMenuFullDto? _activeMenu;
     private Guid? _selectedCategoryId;
     private int _activeMenuIndex;
+
+    // ItemReadOnlyModal shown only via DialogService.Show — no @ref needed
 
     protected override async Task OnInitializedAsync()
     {
@@ -174,7 +158,7 @@
             _restaurant = await PublicMenuService.GetRestaurantByIdAsync(RestaurantId);
             if (_restaurant is null)
             {
-                _error = "Restaurant was not found.";
+                _error = "Restaurant not found.";
                 return;
             }
 
@@ -184,7 +168,7 @@
 
             if (_menus.Count == 0)
             {
-                _error = "No active menus are available for this restaurant.";
+                _error = "No active menus available for this restaurant.";
                 return;
             }
 
@@ -204,14 +188,9 @@
     private async Task SelectMenuAsync(int index)
     {
         if (index < 0 || index >= _menus.Count)
-        {
             return;
-        }
-
-        if (_activeMenuIndex == index && _activeMenu is not null && _activeMenu.Id == _menus[index].Id)
-        {
+        if (_activeMenuIndex == index && _activeMenu?.Id == _menus[index].Id)
             return;
-        }
 
         _activeMenuIndex = index;
         await LoadMenuAsync(_menus[index].Id);
@@ -238,50 +217,46 @@
     }
 
     private List<PublicCategoryWithItemsDto> GetCategories()
-    {
-        return _activeMenu?.Categories
+        => _activeMenu?.Categories
             .OrderBy(x => x.DisplayOrder)
             .ThenBy(x => x.Name)
-            .ToList() ?? new List<PublicCategoryWithItemsDto>();
-    }
+            .ToList() ?? new();
 
     private List<PublicMenuItemDto> GetItems()
     {
-        if (_selectedCategoryId is null)
-        {
-            return new List<PublicMenuItemDto>();
-        }
-
-        var category = GetCategories().FirstOrDefault(x => x.Id == _selectedCategoryId.Value);
-        if (category is null)
-        {
-            return new List<PublicMenuItemDto>();
-        }
-
-        return category.Items
+        if (_selectedCategoryId is null) return new();
+        return GetCategories()
+            .FirstOrDefault(x => x.Id == _selectedCategoryId.Value)?
+            .Items
             .OrderBy(x => x.DisplayOrder)
             .ThenBy(x => x.Name)
-            .ToList();
+            .ToList() ?? new();
     }
 
-    private void SelectCategory(Guid categoryId)
+    private async Task OnCategorySelected(Guid categoryId)
     {
         _selectedCategoryId = categoryId;
+        await Task.CompletedTask;
     }
 
-    private Task OnMobileCategoryChanged(Guid? categoryId)
+    private async Task HandleItemClick(PublicMenuItemDto item)
     {
-        _selectedCategoryId = categoryId;
-        return Task.CompletedTask;
-    }
-
-    private string GetRestaurantLogo()
-    {
-        if (!string.IsNullOrWhiteSpace(_restaurant?.LogoUrl))
+        // Show read-only detail modal
+        var parameters = new DialogParameters<ItemReadOnlyModal>
         {
-            return _restaurant.LogoUrl;
-        }
+            { x => x.Item, item }
+        };
 
-        return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80";
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            BackdropClick = true,
+            CloseButton = true
+        };
+
+        DialogService.Show<ItemReadOnlyModal>(null, parameters, options);
+        await Task.CompletedTask;
     }
 }

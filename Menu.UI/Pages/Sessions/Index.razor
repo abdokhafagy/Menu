@@ -1,61 +1,162 @@
 @page "/sessions"
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Components
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Sessions</PageTitle>
+<PageTitle>@L["Sessions.PageTitle"]</PageTitle>
 
-<PageHeader Title="Sessions" SubTitle="Monitor and revoke active sessions" />
+<PageHeader Title="@L["Sessions.PageTitle"]" SubTitle="@L["Sessions.SubTitle"]" />
 
 <MudPaper Class="panel pa-4">
-    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
+    <MudTable Class="entity-table"
+              @ref="_table"
+              T="SessionInfo"
+              ServerData="LoadServerData"
+              Dense="true"
+              Hover="true"
+              Loading="_loading"
+              RowsPerPage="@_pageSize"
+              CurrentPage="@(_page - 1)">
         <HeaderContent>
-            <MudTh>Device</MudTh>
-            <MudTh>IP Address</MudTh>
-            <MudTh>Expires</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh></MudTh>
+            <MudTh>@L["Sessions.Device"]</MudTh>
+            <MudTh>@L["Sessions.IpAddress"]</MudTh>
+            <MudTh>@L["Sessions.Expires"]</MudTh>
+            <MudTh>@L["Sessions.Status"]</MudTh>
+            <MudTh>@L["Common.Actions"]</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Device</MudTd>
             <MudTd>@context.IpAddress</MudTd>
             <MudTd>@context.ExpiresAt.ToLocalTime().ToString("g")</MudTd>
             <MudTd>
-                <MudChip T="string" Color="@(context.IsRevoked ? Color.Error : Color.Success)">@(context.IsRevoked ? "Revoked" : "Active")</MudChip>
+                <MudChip T="string" Color="@(context.IsRevoked ? Color.Error : Color.Success)">@(context.IsRevoked ? L["Sessions.Revoked"] : L["Common.Active"])</MudChip>
             </MudTd>
             <MudTd>
                 @if (!context.IsRevoked)
                 {
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(context.Id)">
-                        Revoke
+                        @L["Sessions.Revoke"]
                     </MudButton>
                 }
             </MudTd>
         </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@PageSizeOptions" />
+        </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var session in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@session.Device</MudText>
+                    <MudText Typo="Typo.body2">@session.IpAddress</MudText>
+                    <MudText Typo="Typo.body2">@L["Sessions.Expires"]: @session.ExpiresAt.ToLocalTime().ToString("g")</MudText>
+                    <MudChip T="string" Color="@(session.IsRevoked ? Color.Error : Color.Success)">@(session.IsRevoked ? L["Sessions.Revoked"] : L["Common.Active"])</MudChip>
+                    @if (!session.IsRevoked)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(session.Id)">
+                            @L["Sessions.Revoke"]
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
     [Inject] private AuthService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    [SupplyParameterFromQuery(Name = "pageSize")]
+    public int? PageSize { get; set; }
+
+    private const int DefaultPageSize = 10;
+    private static readonly int[] PageSizeOptions = [10, 20, 50];
+
+    private MudTable<SessionInfo>? _table;
     private bool _loading = true;
+    private int _page = 1;
+    private int _pageSize = DefaultPageSize;
     private IReadOnlyList<SessionInfo> _rows = Array.Empty<SessionInfo>();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnParametersSet()
     {
-        await LoadAsync();
+        _page = NormalizePage(Page);
+        _pageSize = NormalizePageSize(PageSize);
     }
 
-    private async Task LoadAsync()
+    private async Task<TableData<SessionInfo>> LoadServerData(TableState state, CancellationToken cancellationToken)
     {
         _loading = true;
-        _rows = await AuthService.GetSessionsAsync();
-        _loading = false;
+        try
+        {
+            var pageNumber = state.Page + 1;
+            var pageSize = NormalizePageSize(state.PageSize);
+            var result = await AuthService.GetSessionsAsync(new QueryParameters
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            }, cancellationToken);
+
+            _page = result.TotalPages switch
+            {
+                0 => 1,
+                _ when pageNumber > result.TotalPages => result.TotalPages,
+                _ => pageNumber
+            };
+            _pageSize = pageSize;
+            _rows = result.Data;
+
+            SyncQueryString(_page, _pageSize);
+
+            return new TableData<SessionInfo>
+            {
+                Items = _rows,
+                TotalItems = result.TotalCount
+            };
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private async Task RevokeAsync(Guid sessionId)
     {
         await AuthService.RevokeSessionAsync(sessionId);
-        Snackbar.Add("Session revoked.", Severity.Success);
-        await LoadAsync();
+        Snackbar.Add(L["Sessions.RevokedSuccess"], Severity.Success);
+        if (_table is not null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private void SyncQueryString(int page, int pageSize)
+    {
+        if (Page == page && PageSize == pageSize)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/sessions?page={page}&pageSize={pageSize}", replace: true);
+    }
+
+    private static int NormalizePage(int? page)
+    {
+        return page is > 0 ? page.Value : 1;
+    }
+
+    private static int NormalizePageSize(int? pageSize)
+    {
+        return PageSizeOptions.Contains(pageSize.GetValueOrDefault())
+            ? pageSize!.Value
+            : DefaultPageSize;
     }
 }

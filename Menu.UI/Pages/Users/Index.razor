@@ -1,28 +1,29 @@
 @page "/users"
 @attribute [Authorize]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Users</PageTitle>
+<PageTitle>@L["Users.PageTitle"]</PageTitle>
 
-<PageHeader Title="Users" SubTitle="Review application users">
+<PageHeader Title="@L["Users.PageTitle"]" SubTitle="@L["Users.SubTitle"]">
     <Actions>
         <AuthorizeView Roles="superadmin" Context="authState">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreateDialogAsync">
-                Add User
+                @L["Users.Add"]
             </MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable @ref="_table" T="UserDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" @ref="_table" T="UserDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
-            <MudTh>Username</MudTh>
-            <MudTh>Email</MudTh>
-            <MudTh>Full Name</MudTh>
-            <MudTh>Restaurant</MudTh>
-            <MudTh>Status</MudTh>
+            <MudTh>@L["Users.Username"]</MudTh>
+            <MudTh>@L["Users.Email"]</MudTh>
+            <MudTh>@L["Users.FullName"]</MudTh>
+            <MudTh>@L["Users.Restaurant"]</MudTh>
+            <MudTh>@L["Users.Status"]</MudTh>
             <AuthorizeView Roles="superadmin" Context="authState">
-                <MudTh>Actions</MudTh>
+                <MudTh>@L["Common.Actions"]</MudTh>
             </AuthorizeView>
         </HeaderContent>
         <RowTemplate>
@@ -31,7 +32,7 @@
             <MudTd>@context.FullName</MudTd>
             <MudTd>@(context.RestaurantName ?? "-")</MudTd>
             <MudTd>
-                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? "Active" : "Inactive")</MudChip>
+                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? L["Common.Active"] : L["Common.Inactive"])</MudChip>
             </MudTd>
             <AuthorizeView Roles="superadmin" Context="authState">
                 <MudTd>
@@ -46,6 +47,27 @@
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
         </PagerContent>
     </MudTable>
+
+    <MudStack Class="entity-mobile-list" Spacing="2">
+        @foreach (var user in _rows)
+        {
+            <MudPaper Class="entity-mobile-card pa-3">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle1">@user.FullName</MudText>
+                    <MudText Typo="Typo.body2">@user.Username</MudText>
+                    <MudText Typo="Typo.body2">@user.Email</MudText>
+                    <MudText Typo="Typo.body2">@(user.RestaurantName ?? "-")</MudText>
+                    <MudChip T="string" Color="@(user.IsActive ? Color.Success : Color.Error)">@(user.IsActive ? L["Common.Active"] : L["Common.Inactive"])</MudChip>
+                    <AuthorizeView Roles="superadmin" Context="authState">
+                        <MudStack Row="true" Spacing="1" Class="entity-actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialogAsync(user)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(user)" />
+                        </MudStack>
+                    </AuthorizeView>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
 </MudPaper>
 
 @code {
@@ -93,7 +115,7 @@
             CloseOnEscapeKey = true
         };
 
-        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Create User", options);
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>(L["Users.CreateDialogTitle"], options);
         var result = await dialog.Result;
         if (result is null || result.Canceled)
         {
@@ -101,7 +123,7 @@
         }
 
         await RefreshAsync();
-        Snackbar.Add("User created successfully.", Severity.Success);
+        Snackbar.Add(L["Users.CreatedSuccess"], Severity.Success);
     }
 
     private async Task OpenEditDialogAsync(UserDto user)
@@ -111,7 +133,7 @@
             [nameof(CreateUserDialog.User)] = user
         };
 
-        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Edit User", parameters, new DialogOptions
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>(L["Users.EditDialogTitle"], parameters, new DialogOptions
         {
             MaxWidth = MaxWidth.Small,
             FullWidth = true,
@@ -125,19 +147,19 @@
         }
 
         await RefreshAsync();
-        Snackbar.Add("User updated successfully.", Severity.Success);
+        Snackbar.Add(L["Users.UpdatedSuccess"], Severity.Success);
     }
 
     private async Task DeleteAsync(UserDto user)
     {
         var parameters = new DialogParameters
         {
-            ["Title"] = "Delete User",
-            ["Message"] = $"Delete user '{user.Username}'? This cannot be undone.",
-            ["ConfirmText"] = "Delete"
+            ["Title"] = L["Users.DeleteTitle"],
+            ["Message"] = string.Format(L["Users.DeleteMessage"], user.Username),
+            ["ConfirmText"] = L["Common.Delete"]
         };
 
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete User", parameters);
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(parameters);
         var result = await dialog.Result;
         if (result is null || result.Canceled)
         {
@@ -146,6 +168,6 @@
 
         await Service.DeleteAsync(user.Id);
         await RefreshAsync();
-        Snackbar.Add("User deleted.", Severity.Success);
+        Snackbar.Add(L["Users.DeletedSuccess"], Severity.Success);
     }
 }

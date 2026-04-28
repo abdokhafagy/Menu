@@ -1,9 +1,10 @@
 @page "/404"
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<PageTitle>Not Found</PageTitle>
+<PageTitle>@L["NotFound.PageTitle"]</PageTitle>
 
 <MudPaper Class="panel pa-6 text-center">
-    <MudText Typo="Typo.h4">Page not found</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">The requested page does not exist.</MudText>
-    <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">Go to dashboard</MudButton>
+    <MudText Typo="Typo.h4">@L["NotFound.Title"]</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">@L["NotFound.Message"]</MudText>
+    <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">@L["NotFound.GoDashboard"]</MudButton>
 </MudPaper>
