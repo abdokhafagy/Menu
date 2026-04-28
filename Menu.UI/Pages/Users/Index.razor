@@ -154,12 +154,11 @@
     {
         var parameters = new DialogParameters
         {
-            ["Title"] = L["Users.DeleteTitle"],
             ["Message"] = string.Format(L["Users.DeleteMessage"], user.Username),
             ["ConfirmText"] = L["Common.Delete"]
         };
 
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>(parameters);
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["Users.DeleteTitle"], parameters);
         var result = await dialog.Result;
         if (result is null || result.Canceled)
         {

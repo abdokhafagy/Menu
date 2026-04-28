@@ -120,9 +120,8 @@
 
     private async Task DeleteAsync(CategoryDto category)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["Categories.DeleteTitle"], new DialogParameters
         {
-            ["Title"] = L["Categories.DeleteTitle"],
             ["Message"] = string.Format(L["Categories.DeleteMessage"], category.Name),
             ["ConfirmText"] = L["Common.Delete"]
         });

@@ -117,9 +117,8 @@
 
     private async Task DeleteAsync(PermissionDto permission)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["Permissions.DeleteTitle"], new DialogParameters
         {
-            ["Title"] = L["Permissions.DeleteTitle"],
             ["Message"] = string.Format(L["Permissions.DeleteMessage"], permission.Name),
             ["ConfirmText"] = L["Common.Delete"]
         });

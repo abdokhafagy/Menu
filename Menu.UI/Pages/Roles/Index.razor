@@ -114,9 +114,8 @@
 
     private async Task DeleteAsync(RoleDto role)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>(new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["Roles.DeleteTitle"], new DialogParameters
         {
-            ["Title"] = L["Roles.DeleteTitle"],
             ["Message"] = string.Format(L["Roles.DeleteMessage"], role.Name),
             ["ConfirmText"] = L["Common.Delete"]
         });
