@@ -189,10 +189,10 @@
 
     private async Task DeleteAsync(RestaurantDto restaurant)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["Common.Delete"], new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["Common.Delete"].ToString(), new DialogParameters
         {
             ["Message"] = restaurant.Name,
-            ["ConfirmText"] = L["Common.Delete"]
+            ["ConfirmText"] = L["Common.Delete"].ToString()
         });
 
         var result = await dialog.Result;

@@ -120,10 +120,10 @@
 
     private async Task DeleteAsync(ItemOptionDto itemOption)
     {
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["ItemOptions.DeleteTitle"], new DialogParameters
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(L["ItemOptions.DeleteTitle"].ToString(), new DialogParameters
         {
-            ["Message"] = string.Format(L["ItemOptions.DeleteMessage"], itemOption.Name),
-            ["ConfirmText"] = L["Common.Delete"]
+            ["Message"] = string.Format(L["ItemOptions.DeleteMessage"], itemOption.Name).ToString(),
+            ["ConfirmText"] = L["Common.Delete"].ToString()
         });
 
         var result = await dialog.Result;
