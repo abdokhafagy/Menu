@@ -1,0 +1,119 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@inject Menu.UI.State.CartState CartState
+@inject ISnackbar Snackbar
+
+<MudDrawer @bind-Open="_isOpen"
+           Anchor="Anchor.Bottom"
+           Variant="DrawerVariant.Temporary"
+           Class="cart-drawer"
+           Width="100%"
+           Height="85vh">
+    <div class="cart-drawer__inner">
+        @* Header *@
+        <div class="cart-drawer__header">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Medium" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6">@(L["Cart.Title"])</MudText>
+                    @if (CartState.TotalItems > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="cart-drawer__count-chip">
+                            @(CartState.TotalItems) @(CartState.TotalItems == 1 ? "item" : "items")
+                        </MudChip>
+                    }
+                </MudStack>
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               OnClick="Close"
+                               aria-label="Close cart" />
+            </MudStack>
+        </div>
+
+        @* Content *@
+        <div class="cart-drawer__body">
+            @if (CartState.Items.Count == 0)
+            {
+                <EmptyState Title="@(L["Cart.Empty.Title"])"
+                            Description="@(L["Cart.Empty.Description"])"
+                            Icon="@Icons.Material.Filled.ShoppingCart"
+                            IconColor="Color.Default" />
+            }
+            else
+            {
+                <MudStack Spacing="2" Class="cart-drawer__items">
+                    @foreach (var item in CartState.Items)
+                    {
+                        <div class="cart-drawer__item">
+                            <div class="cart-drawer__item-info">
+                                <MudText Typo="Typo.subtitle2" Class="cart-drawer__item-name">
+                                    @(item.ItemName)
+                                </MudText>
+                                @if (item.Selections.Count > 0)
+                                {
+                                    <MudStack Spacing="0" Class="cart-drawer__item-selections">
+                                        @foreach (var sel in item.Selections)
+                                        {
+                                            <MudText Typo="Typo.caption" Class="text-muted">
+                                                @(sel.OptionName): @(sel.ValueName)
+                                                @if (sel.PriceModifier != 0)
+                                                {
+                                                    <span class="cart-drawer__modifier">
+                                                        (@(sel.PriceModifier > 0 ? $"+{sel.PriceModifier:N2}" : sel.PriceModifier.ToString("N2")))
+                                                    </span>
+                                                }
+                                            </MudText>
+                                        }
+                                    </MudStack>
+                                }
+                                <MudText Typo="Typo.body2" Class="cart-drawer__item-price mt-1">
+                                    @(item.TotalPrice.ToString("N2"))
+                                </MudText>
+                            </div>
+                            <div class="cart-drawer__item-controls">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="() => CartState.Remove(item.CartLineId)"
+                                               aria-label="Remove item" />
+                            </div>
+                        </div>
+                    }
+                </MudStack>
+            }
+        </div>
+
+        @* Footer with total + CTA *@
+        @if (CartState.Items.Count > 0)
+        {
+            <div class="cart-drawer__footer">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="cart-drawer__total-row">
+                    <MudText Typo="Typo.subtitle1">@(L["Cart.Total"])</MudText>
+                    <MudText Typo="Typo.h5" Class="cart-drawer__total-price">
+                        @(CartState.TotalPrice.ToString("N2"))
+                    </MudText>
+                </MudStack>
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Size="Size.Large"
+                           Class="cart-drawer__checkout-btn mt-3"
+                           OnClick="Checkout">
+                    @(L["Cart.Checkout"])
+                </MudButton>
+            </div>
+        }
+    </div>
+</MudDrawer>
+
+@code {
+    private bool _isOpen;
+
+    public void Toggle() => _isOpen = !_isOpen;
+    public void Open() => _isOpen = true;
+    public void Close() => _isOpen = false;
+
+    private void Checkout()
+    {
+        Snackbar.Add("Checkout coming soon!", Severity.Info);
+    }
+}

@@ -1,6 +1,7 @@
 using AutoMapper;
 
 using Menu.Application.Common.Exceptions;
+using Menu.Application.DTOs.Permission;
 using Menu.Application.DTOs.Role;
 using Menu.Application.Interfaces;
 using Menu.Domain.Entities;
@@ -42,5 +43,17 @@ public class RoleService : CrudServiceBase<Role, RoleDto, CreateRoleDto, UpdateR
         }
 
         await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public Task<IReadOnlyList<PermissionDto>> GetPermissionsAsync(Guid roleId, CancellationToken ct = default)
+    {
+        var permissions =
+            (from rp in _unitOfWork.RolePermissions.Query()
+             join p in _unitOfWork.Permissions.Query() on rp.PermissionId equals p.Id
+             where rp.RoleId == roleId
+             select new PermissionDto(p.Id, p.Name, p.Description, p.Module, p.CreatedAt))
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<PermissionDto>>(permissions);
     }
 }

@@ -52,13 +52,20 @@ public sealed class JwtAuthorizationHandler : DelegatingHandler
         var refreshed = await TryRefreshTokenAsync(cancellationToken);
         if (!refreshed)
         {
+            await LogoutAsync();
             return response;
         }
 
         var retryRequest = await CloneRequestAsync(request);
         await AttachTokenAsync(retryRequest);
         response.Dispose();
-        return await base.SendAsync(retryRequest, cancellationToken);
+        var retryResponse = await base.SendAsync(retryRequest, cancellationToken);
+        if (retryResponse.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            await LogoutAsync();
+        }
+
+        return retryResponse;
     }
 
     private async Task AttachTokenAsync(HttpRequestMessage request)
@@ -72,48 +79,49 @@ public sealed class JwtAuthorizationHandler : DelegatingHandler
 
     private async Task<bool> TryRefreshTokenAsync(CancellationToken cancellationToken)
     {
-        await RefreshLock.WaitAsync(cancellationToken);
+        // Timeout prevents a leaked semaphore from permanently blocking all future requests.
+        if (!await RefreshLock.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken))
+            return false;
+
         try
         {
+            // Double-check: a concurrent caller may have already refreshed successfully.
             var existingAccessToken = await _tokenService.GetAccessTokenAsync();
             if (!string.IsNullOrWhiteSpace(existingAccessToken) && !IsTokenExpired(existingAccessToken))
-            {
                 return true;
-            }
 
             var accessToken = await _tokenService.GetAccessTokenAsync();
             var refreshToken = await _tokenService.GetRefreshTokenAsync();
             if (string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrWhiteSpace(refreshToken))
-            {
                 return false;
-            }
 
             var refreshClient = _httpClientFactory.CreateClient("MenuApiNoAuth");
-            using var refreshResponse = await refreshClient.PostAsJsonAsync("api/auth/refresh", new RefreshTokenRequest(accessToken, refreshToken), cancellationToken);
-            if (!refreshResponse.IsSuccessStatusCode)
-            {
-                await LogoutAsync();
-                return false;
-            }
+            using var refreshResponse = await refreshClient.PostAsJsonAsync(
+                "api/auth/refresh",
+                new RefreshTokenRequest(accessToken, refreshToken),
+                cancellationToken);
 
-            var payload = await refreshResponse.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>(new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }, cancellationToken);
+            if (!refreshResponse.IsSuccessStatusCode)
+                return false;
+
+            var payload = await refreshResponse.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true },
+                cancellationToken);
 
             if (payload is null || !payload.Success || payload.Data is null)
-            {
-                await LogoutAsync();
                 return false;
-            }
 
             await _tokenService.SaveTokensAsync(payload.Data.AccessToken, payload.Data.RefreshToken);
             _authStateProvider.NotifyUserAuthentication(payload.Data.AccessToken);
             return true;
         }
+        catch (OperationCanceledException)
+        {
+            // Let cancellation propagate cleanly without masking it as a refresh failure.
+            return false;
+        }
         catch
         {
-            await LogoutAsync();
             return false;
         }
         finally
@@ -140,7 +148,7 @@ public sealed class JwtAuthorizationHandler : DelegatingHandler
     {
         await _tokenService.ClearTokensAsync();
         _authStateProvider.NotifyUserLogout();
-        _navigationManager.NavigateTo("/login", true);
+        _navigationManager.NavigateTo("/unauthorized", true);
     }
 
     private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage request)

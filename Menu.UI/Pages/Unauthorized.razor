@@ -1,0 +1,24 @@
+@page "/unauthorized"
+@layout AuthLayout
+@inject NavigationManager NavigationManager
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
+<PageTitle>@L["Unauthorized.PageTitle"]</PageTitle>
+
+<MudPaper Class="panel pa-6 text-center">
+    <MudText Typo="Typo.h4" Class="mb-2">@L["Unauthorized.Title"]</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">@L["Unauthorized.Message"]</MudText>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               OnClick="GoToLogin">
+        @L["Unauthorized.GoToLogin"]
+    </MudButton>
+</MudPaper>
+
+@code {
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/login", true);
+    }
+}

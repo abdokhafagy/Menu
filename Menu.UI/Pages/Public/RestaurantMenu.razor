@@ -1,10 +1,10 @@
 @page "/public/restaurants/{RestaurantId:guid}/menu"
 @attribute [AllowAnonymous]
 @layout PublicMenuLayout
+@implements IDisposable
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
 <div class="public-menu-page fade-in">
-    @* ── Loading ── *@
     @if (_loading)
     {
         <div class="public-menu-page__hero-skeleton">
@@ -32,8 +32,6 @@
             }
         </div>
     }
-
-    @* ── Error ── *@
     else if (!string.IsNullOrWhiteSpace(_error))
     {
         <div class="public-menu-page__error-wrap">
@@ -45,13 +43,10 @@
             </MudButton>
         </div>
     }
-
-    @* ── Main content ── *@
     else if (_restaurant is not null)
     {
         <RestaurantHeader Restaurant="_restaurant" />
 
-        @* Multi-menu chips (if > 1 menu) *@
         @if (_menus.Count > 1)
         {
             <div class="public-menu-page__menu-chips">
@@ -72,7 +67,6 @@
             </div>
         }
 
-        @* Menu loading shimmer *@
         @if (_loadingMenu)
         {
             <div class="public-menu-page__grid mt-4">
@@ -82,20 +76,15 @@
                 }
             </div>
         }
-
-        @* Categories + items *@
         else if (_activeMenu is not null)
         {
-            @* Sticky horizontal category tabs *@
             <div class="public-menu-page__sticky-tabs">
-                <CategoryTabs Categories="GetCategories()"
+                <CategoryTabs Categories="_categories"
                               SelectedCategoryId="_selectedCategoryId ?? Guid.Empty"
                               OnCategorySelected="OnCategorySelected" />
             </div>
 
-            @* Items grid *@
-            var items = GetItems();
-            if (items.Count == 0)
+            @if (_items.Count == 0)
             {
                 <EmptyState Title="No items here"
                             Description="This category has no items yet."
@@ -106,15 +95,15 @@
             else
             {
                 <div class="public-menu-page__grid">
-                    @for (var i = 0; i < items.Count; i++)
+                    @for (var i = 0; i < _items.Count; i++)
                     {
-                        var item = items[i];
-                        <div class="public-menu-page__grid-item">
-                            <MenuItemCard Item="item"
-                                          ReadOnlyMode="true"
-                                          AnimationDelayMs="@(i * 50 % 250)"
-                                          OnItemClick="HandleItemClick" />
-                        </div>
+                        var item = _items[i];
+                        <MenuItemCard @key="item.Id"
+                                      Item="item"
+                                      ReadOnlyMode="true"
+                                      IsLoading="@(item.Id == _loadingItemId)"
+                                      AnimationDelayMs="@(i * 50 % 250)"
+                                      OnItemClick="HandleItemClick" />
                     }
                 </div>
             }
@@ -122,14 +111,12 @@
     }
 </div>
 
-@* Item detail modal — shown only via DialogService.Show *@
-
 @code {
     [Parameter] public Guid RestaurantId { get; set; }
 
     [Inject] private PublicMenuService PublicMenuService { get; set; } = default!;
-    [Inject] private State.AppState AppState { get; set; } = default!;
     [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     private bool _loading = true;
     private bool _loadingMenu;
@@ -137,35 +124,53 @@
 
     private PublicRestaurantDto? _restaurant;
     private List<PublicMenuDto> _menus = new();
-    private PublicMenuFullDto? _activeMenu;
+    private PublicMenuSummaryDto? _activeMenu;
     private Guid? _selectedCategoryId;
+    private Guid? _loadingItemId;
     private int _activeMenuIndex;
 
-    // ItemReadOnlyModal shown only via DialogService.Show — no @ref needed
+    private CancellationTokenSource? _menuLoadCts;
+
+    private IReadOnlyList<PublicCategoryMenuSummaryDto> _categories = Array.Empty<PublicCategoryMenuSummaryDto>();
+    private IReadOnlyList<PublicMenuItemSummaryDto> _items = Array.Empty<PublicMenuItemSummaryDto>();
 
     protected override async Task OnInitializedAsync()
     {
         await ReloadAsync();
     }
 
+    public void Dispose()
+    {
+        _menuLoadCts?.Cancel();
+        _menuLoadCts?.Dispose();
+    }
+
     private async Task ReloadAsync()
     {
         _loading = true;
         _error = null;
+        _categories = Array.Empty<PublicCategoryMenuSummaryDto>();
+        _items = Array.Empty<PublicMenuItemSummaryDto>();
+
+        // Yield so the skeleton paints before we kick off network I/O.
+        await Task.Yield();
 
         try
         {
-            _restaurant = await PublicMenuService.GetRestaurantByIdAsync(RestaurantId);
+            // Parallelize independent calls; the menu summary still depends on the
+            // menu list so it runs in a second round.
+            var restaurantTask = PublicMenuService.GetRestaurantByIdAsync(RestaurantId);
+            var menusTask = PublicMenuService.GetMenusByRestaurantAsync(RestaurantId);
+            await Task.WhenAll(restaurantTask, menusTask);
+
+            _restaurant = restaurantTask.Result;
             if (_restaurant is null)
             {
                 _error = "Restaurant not found.";
                 return;
             }
 
-            _menus = (await PublicMenuService.GetMenusByRestaurantAsync(RestaurantId))
-                .OrderBy(x => x.Name)
-                .ToList();
-
+            _menus = menusTask.Result.OrderBy(x => x.Name).ToList();
             if (_menus.Count == 0)
             {
                 _error = "No active menus available for this restaurant.";
@@ -188,9 +193,14 @@
     private async Task SelectMenuAsync(int index)
     {
         if (index < 0 || index >= _menus.Count)
+        {
             return;
+        }
+
         if (_activeMenuIndex == index && _activeMenu?.Id == _menus[index].Id)
+        {
             return;
+        }
 
         _activeMenuIndex = index;
         await LoadMenuAsync(_menus[index].Id);
@@ -198,13 +208,39 @@
 
     private async Task LoadMenuAsync(Guid menuId)
     {
+        _menuLoadCts?.Cancel();
+        _menuLoadCts?.Dispose();
+        _menuLoadCts = new CancellationTokenSource();
+        var ct = _menuLoadCts.Token;
+
         _loadingMenu = true;
         _error = null;
+        StateHasChanged();
+        await Task.Yield();
 
         try
         {
-            _activeMenu = await PublicMenuService.GetFullMenuAsync(menuId, includeOptions: true);
-            _selectedCategoryId = GetCategories().FirstOrDefault()?.Id;
+            var menu = await PublicMenuService.GetRestaurantMenuAsync(RestaurantId, menuId, ct);
+            if (ct.IsCancellationRequested)
+            {
+                return;
+            }
+
+            _activeMenu = menu;
+            _categories = menu?.Categories
+                .OrderBy(x => x.DisplayOrder)
+                .ThenBy(x => x.Name)
+                .ToList() ?? (IReadOnlyList<PublicCategoryMenuSummaryDto>)Array.Empty<PublicCategoryMenuSummaryDto>();
+
+            _selectedCategoryId = _categories.Any(c => c.Id == _selectedCategoryId)
+                ? _selectedCategoryId
+                : _categories.FirstOrDefault()?.Id;
+
+            RebuildItems();
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by another menu load — ignore.
         }
         catch (Exception ex)
         {
@@ -212,51 +248,99 @@
         }
         finally
         {
-            _loadingMenu = false;
+            if (!ct.IsCancellationRequested)
+            {
+                _loadingMenu = false;
+            }
         }
     }
 
-    private List<PublicCategoryWithItemsDto> GetCategories()
-        => _activeMenu?.Categories
-            .OrderBy(x => x.DisplayOrder)
-            .ThenBy(x => x.Name)
-            .ToList() ?? new();
-
-    private List<PublicMenuItemDto> GetItems()
+    private void RebuildItems()
     {
-        if (_selectedCategoryId is null) return new();
-        return GetCategories()
-            .FirstOrDefault(x => x.Id == _selectedCategoryId.Value)?
-            .Items
+        if (_selectedCategoryId is null)
+        {
+            _items = Array.Empty<PublicMenuItemSummaryDto>();
+            return;
+        }
+
+        var category = _categories.FirstOrDefault(x => x.Id == _selectedCategoryId.Value);
+        if (category is null || category.Items.Count == 0)
+        {
+            _items = Array.Empty<PublicMenuItemSummaryDto>();
+            return;
+        }
+
+        _items = category.Items
             .OrderBy(x => x.DisplayOrder)
             .ThenBy(x => x.Name)
-            .ToList() ?? new();
+            .ToList();
     }
 
-    private async Task OnCategorySelected(Guid categoryId)
+    private void OnCategorySelected(Guid categoryId)
     {
+        if (_selectedCategoryId == categoryId)
+        {
+            return;
+        }
+
         _selectedCategoryId = categoryId;
-        await Task.CompletedTask;
+        RebuildItems();
     }
 
-    private async Task HandleItemClick(PublicMenuItemDto item)
+    private async Task HandleItemClick(PublicMenuItemSummaryDto item)
     {
-        // Show read-only detail modal
-        var parameters = new DialogParameters<ItemReadOnlyModal>
+        if (_loadingItemId == item.Id)
+        {
+            return;
+        }
+
+        _loadingItemId = item.Id;
+
+        try
+        {
+            var detail = await PublicMenuService.GetItemDetailAsync(item.Id);
+
+            if (detail is not null)
+            {
+                var parameters = new DialogParameters<CustomizeItemDialog>
+                {
+                    { x => x.Item, detail }
+                };
+
+                var dialogRef = await DialogService.ShowAsync<CustomizeItemDialog>(null, parameters, BuildDialogOptions(MaxWidth.Large));
+                await dialogRef.Result;
+                return;
+            }
+
+            await ShowFallbackDetailAsync(item);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+            await ShowFallbackDetailAsync(item);
+        }
+        finally
+        {
+            _loadingItemId = null;
+        }
+    }
+
+    private Task ShowFallbackDetailAsync(PublicMenuItemSummaryDto item)
+    {
+        var fallbackParams = new DialogParameters<ItemReadOnlyModal>
         {
             { x => x.Item, item }
         };
 
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-            CloseOnEscapeKey = true,
-            BackdropClick = true,
-            CloseButton = true
-        };
-
-        DialogService.Show<ItemReadOnlyModal>(null, parameters, options);
-        await Task.CompletedTask;
+        return DialogService.ShowAsync<ItemReadOnlyModal>(null, fallbackParams, BuildDialogOptions(MaxWidth.Medium));
     }
+
+    private static DialogOptions BuildDialogOptions(MaxWidth maxWidth) => new()
+    {
+        MaxWidth = maxWidth,
+        FullWidth = true,
+        CloseOnEscapeKey = true,
+        BackdropClick = true,
+        CloseButton = true
+    };
 }

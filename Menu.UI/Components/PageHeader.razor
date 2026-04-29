@@ -1,15 +1,17 @@
-<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4 fade-in">
-    <div>
-        <MudText Typo="Typo.h4" Class="page-title">@Title</MudText>
-        @if (!string.IsNullOrWhiteSpace(SubTitle))
+<MudStack Class="page-header mb-4 fade-in" Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween" Class="page-header__row">
+        <div class="page-header__content">
+            <MudText Typo="Typo.h4" Class="page-title">@Title</MudText>
+            @if (!string.IsNullOrWhiteSpace(SubTitle))
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@SubTitle</MudText>
+            }
+        </div>
+        @if (Actions is not null)
         {
-            <MudText Typo="Typo.body2" Color="Color.Secondary">@SubTitle</MudText>
+            <MudStack Row="true" Spacing="2" Class="page-header__actions">@Actions</MudStack>
         }
-    </div>
-    @if (Actions is not null)
-    {
-        <MudStack Row="true" Spacing="2">@Actions</MudStack>
-    }
+    </MudStack>
 </MudStack>
 
 @code {

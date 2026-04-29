@@ -29,12 +29,23 @@
                                 <MudNumericField T="int" Label="Display Order" @bind-Value="_displayOrder" Required="true" />
                             </MudItem>
                             <MudItem xs="12" md="4">
-                                <MudSelect T="Guid?" Label="Category" @bind-Value="_categoryId" Required="true" Disabled="_loadingCategories">
-                                    @foreach (var category in _categories)
-                                    {
-                                        <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                @if (_loadingCategories)
+                                {
+                                    <div>
+                                        <MudText Typo="Typo.caption" Class="public-menu-muted">Category</MudText>
+                                        <MudSkeleton Height="40px" Class="mt-2" />
+                                        <MudText Typo="Typo.caption" Class="public-menu-muted mt-2">Loading categories...</MudText>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <MudSelect T="Guid?" Label="Category" @bind-Value="_categoryId" Required="true">
+                                        @foreach (var category in _categories)
+                                        {
+                                            <MudSelectItem T="Guid?" Value="@category.Id">@category.Name</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                }
                             </MudItem>
                             <MudItem xs="12">
                                 <MudStack Spacing="1">
@@ -99,7 +110,7 @@
 
                                         <MudGrid>
                                             <MudItem xs="12" md="6">
-                                                <MudTextField Label="Option Name" @bind-Value="option.Name" Required="true" />
+                                                <MudTextField Label="Option Name" @bind-Value="option.Name" />
                                             </MudItem>
                                             <MudItem xs="12" md="6">
                                                 <MudTextField Label="Option Name AR" @bind-Value="option.NameAr" />
@@ -154,7 +165,7 @@
 
                                                     <MudGrid>
                                                         <MudItem xs="12" md="4">
-                                                            <MudTextField Label="Value" @bind-Value="value.Value" Required="true" />
+                                                            <MudTextField Label="Value" @bind-Value="value.Value" />
                                                         </MudItem>
                                                         <MudItem xs="12" md="4">
                                                             <MudTextField Label="Value AR" @bind-Value="value.ValueAr" />
@@ -222,22 +233,36 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (MenuItem is not null)
+        try
         {
-            _name = MenuItem.Name;
-            _nameAr = MenuItem.NameAr;
-            _description = MenuItem.Description;
-            _descriptionAr = MenuItem.DescriptionAr;
-            _price = MenuItem.Price;
-            _imageUrl = MenuItem.ImageUrl;
-            _isAvailable = MenuItem.IsAvailable;
-            _displayOrder = MenuItem.DisplayOrder;
-            _categoryId = MenuItem.CategoryId;
-        }
+            if (MenuItem is not null)
+            {
+                _name = MenuItem.Name;
+                _nameAr = MenuItem.NameAr;
+                _description = MenuItem.Description;
+                _descriptionAr = MenuItem.DescriptionAr;
+                _price = MenuItem.Price;
+                _imageUrl = MenuItem.ImageUrl;
+                _isAvailable = MenuItem.IsAvailable;
+                _displayOrder = MenuItem.DisplayOrder;
+                _categoryId = MenuItem.CategoryId;
+            }
 
-        var result = await CategoryService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
-        _categories = result?.Data.ToList() ?? new List<CategoryDto>();
-        _loadingCategories = false;
+            // Load categories asynchronously without blocking
+            await Task.Delay(10); // Yield to allow UI to render loading state
+            
+            var result = await CategoryService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 50 });
+            _categories = result?.Data.ToList() ?? new List<CategoryDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load categories: {ex.Message}", Severity.Error);
+            _categories = new List<CategoryDto>();
+        }
+        finally
+        {
+            _loadingCategories = false;
+        }
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -277,6 +302,12 @@
 
                 foreach (var option in _options)
                 {
+                    // Skip options with empty names
+                    if (string.IsNullOrWhiteSpace(option.Name))
+                    {
+                        continue;
+                    }
+
                     var createdOption = await ItemOptionService.CreateAsync(new CreateItemOptionRequest(option.Name.Trim(), option.NameAr, option.IsRequired, option.MinSelections, option.MaxSelections, option.SelectionType, createdItem.Id));
                     if (createdOption is null)
                     {
@@ -285,6 +316,12 @@
 
                     foreach (var value in option.Values.OrderBy(value => value.DisplayOrder))
                     {
+                        // Skip values with empty labels
+                        if (string.IsNullOrWhiteSpace(value.Value))
+                        {
+                            continue;
+                        }
+
                         var createdValue = await OptionValueService.CreateAsync(new CreateOptionValueRequest(value.Value.Trim(), value.ValueAr, value.PriceModifier, value.IsDefault, value.DisplayOrder, createdOption.Id));
                         if (createdValue is null)
                         {
@@ -386,10 +423,10 @@
 
     private bool ValidateOptionDrafts()
     {
+        // Options are optional; only validate if options are provided
         if (_options.Count == 0)
         {
-            Snackbar.Add("Add at least one option group before saving.", Severity.Error);
-            return false;
+            return true;
         }
 
         foreach (var option in _options)
@@ -412,9 +449,16 @@
                 return false;
             }
 
+            // If an option is added, it must have values; otherwise skip validation
+            if (string.IsNullOrWhiteSpace(option.Name))
+            {
+                // Skip options with empty names
+                continue;
+            }
+
             if (option.Values.Count == 0)
             {
-                Snackbar.Add($"Add at least one value for option '{option.Name}'.", Severity.Error);
+                Snackbar.Add($"Option '{option.Name}' must have at least one value.", Severity.Error);
                 return false;
             }
 

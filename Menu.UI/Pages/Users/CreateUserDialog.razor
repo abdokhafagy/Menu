@@ -1,3 +1,6 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+
 <MudDialog>
     <DialogContent>
         <MudForm @ref="_form">
@@ -22,6 +25,32 @@
                     }
                 }
             </MudSelect>
+
+            @if (_canAssignRoles)
+            {
+                <MudSelect T="Guid?"
+                           Label="@L["Users.Role"]"
+                           @bind-Value="_roleId"
+                           Required="@(!_isEditMode)"
+                           Disabled="_loadingRoles">
+                    @if (_roles.Count == 0)
+                    {
+                        <MudSelectItem T="Guid?" Value="@((Guid?)null)">@L["Users.NoRoles"]</MudSelectItem>
+                    }
+                    else
+                    {
+                        @if (_isEditMode)
+                        {
+                            <MudSelectItem T="Guid?" Value="@((Guid?)null)">@L["Users.NoRoleSelected"]</MudSelectItem>
+                        }
+                        @foreach (var role in _roles)
+                        {
+                            <MudSelectItem T="Guid?" Value="@role.Id">@role.Name</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            }
+
             <MudSwitch T="bool" Label="Active" Color="Color.Primary" Class="dialog-toggle" @bind-Value="_isActive" />
             </MudStack>
         </MudForm>
@@ -40,11 +69,14 @@
 
     [Inject] private UserService UserService { get; set; } = default!;
     [Inject] private RestaurantService RestaurantService { get; set; } = default!;
+    [Inject] private RoleService RoleService { get; set; } = default!;
+    [Inject] private UserContextService UserContext { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     private MudForm? _form;
     private bool _busy;
     private bool _loadingRestaurants = true;
+    private bool _loadingRoles = true;
 
     private string _username = string.Empty;
     private string _email = string.Empty;
@@ -52,12 +84,17 @@
     private string _password = string.Empty;
     private bool _isActive = true;
     private Guid? _restaurantId;
+    private Guid? _roleId;
     private List<RestaurantDto> _restaurants = new();
+    private List<RoleDto> _roles = new();
     private bool _isEditMode;
+    private bool _canAssignRoles;
 
     protected override async Task OnInitializedAsync()
     {
         _isEditMode = User is not null;
+        _canAssignRoles = UserContext.HasRole(AppRoles.SuperAdmin);
+
         if (User is not null)
         {
             _username = User.Username;
@@ -67,6 +104,18 @@
             _restaurantId = User.RestaurantId;
         }
 
+        var restaurantsTask = LoadRestaurantsAsync();
+        var rolesTask = _canAssignRoles ? LoadRolesAsync() : Task.CompletedTask;
+        await Task.WhenAll(restaurantsTask, rolesTask);
+
+        if (_canAssignRoles && _isEditMode && User is not null)
+        {
+            await PreselectExistingRoleAsync(User.Id);
+        }
+    }
+
+    private async Task LoadRestaurantsAsync()
+    {
         try
         {
             var result = await RestaurantService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
@@ -79,6 +128,42 @@
         finally
         {
             _loadingRestaurants = false;
+        }
+    }
+
+    private async Task LoadRolesAsync()
+    {
+        try
+        {
+            var result = await RoleService.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
+            _roles = result?.Data.ToList() ?? new List<RoleDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load roles: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingRoles = false;
+        }
+    }
+
+    private async Task PreselectExistingRoleAsync(Guid userId)
+    {
+        try
+        {
+            var assigned = await UserService.GetRolesAsync(userId);
+            if (assigned.Count == 0) return;
+
+            var first = _roles.FirstOrDefault(r => assigned.Any(a => a.Equals(r.Name, StringComparison.OrdinalIgnoreCase)));
+            if (first is not null)
+            {
+                _roleId = first.Id;
+            }
+        }
+        catch
+        {
+            // Best-effort preselection — leave _roleId null on failure.
         }
     }
 
@@ -104,9 +189,16 @@
             return;
         }
 
+        if (_canAssignRoles && !_isEditMode && !_roleId.HasValue)
+        {
+            Snackbar.Add(L["Users.RoleRequired"], Severity.Error);
+            return;
+        }
+
         _busy = true;
         try
         {
+            Guid targetUserId;
             if (_isEditMode)
             {
                 var updated = await UserService.UpdateAsync(User!.Id, new UpdateUserRequest(_username, _email, _fullName, _isActive, _restaurantId.Value));
@@ -115,6 +207,7 @@
                     Snackbar.Add("Failed to update user.", Severity.Error);
                     return;
                 }
+                targetUserId = User.Id;
             }
             else
             {
@@ -131,6 +224,19 @@
                 {
                     Snackbar.Add("Failed to create user.", Severity.Error);
                     return;
+                }
+                targetUserId = created.Id;
+            }
+
+            if (_canAssignRoles && _roleId.HasValue)
+            {
+                try
+                {
+                    await UserService.AssignRolesAsync(targetUserId, new AssignRolesRequest(new List<Guid> { _roleId.Value }));
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add(string.Format(L["Users.RoleAssignError"], ex.Message), Severity.Warning);
                 }
             }
 

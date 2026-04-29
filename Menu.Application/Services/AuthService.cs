@@ -2,9 +2,11 @@ using System.Security.Claims;
 
 using AutoMapper;
 using Menu.Application.Common.Exceptions;
+using Menu.Application.Common.Models;
 using Menu.Application.DTOs.Auth;
 using Menu.Application.DTOs.User;
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 using Menu.Domain.Entities;
 using Menu.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -57,7 +59,7 @@ public class AuthService : IAuthService
 
         await _unitOfWork.Users.AddAsync(user, ct);
 
-        var defaultRole = _unitOfWork.Roles.Query().FirstOrDefault(x => x.Name == "User");
+        var defaultRole = _unitOfWork.Roles.Query().FirstOrDefault(x => x.Name == RoleNames.User);
         if (defaultRole is not null)
         {
             await _unitOfWork.UserRoles.AddAsync(new UserRole
@@ -172,16 +174,30 @@ public class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync(ct);
     }
 
-    public Task<IReadOnlyList<SessionDto>> GetSessionsAsync(ClaimsPrincipal principal, CancellationToken ct = default)
+    public Task<PaginatedResult<SessionDto>> GetSessionsAsync(ClaimsPrincipal principal, QueryParameters parameters, CancellationToken ct = default)
     {
         var userId = GetUserId(principal);
-        var sessions = _unitOfWork.UserSessions.Query()
+        var pageNumber = parameters.PageNumber > 0 ? parameters.PageNumber : 1;
+        var pageSize = parameters.PageSize > 0 ? parameters.PageSize : 10;
+
+        var query = _unitOfWork.UserSessions.Query()
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderByDescending(x => x.CreatedAt);
+
+        var totalCount = query.Count();
+        var sessions = query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new SessionDto(x.Id, x.Device, x.IpAddress, x.CreatedAt, x.RefreshTokenExpiresAt, x.IsRevoked))
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<SessionDto>>(sessions);
+        return Task.FromResult(new PaginatedResult<SessionDto>
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Data = sessions
+        });
     }
 
     public async Task RevokeSessionAsync(ClaimsPrincipal principal, Guid sessionId, CancellationToken ct = default)

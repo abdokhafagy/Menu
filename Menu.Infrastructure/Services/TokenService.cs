@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 using Menu.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -34,14 +35,16 @@ public class TokenService : ITokenService
 
         var claims = new List<Claim>
         {
+            new(JwtClaimTypes.UserId, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtClaimTypes.RestaurantId, user.RestaurantId.ToString()),
             new(JwtRegisteredClaimNames.Jti, jti),
             new("sid", sessionId.ToString())
         };
 
-        claims.AddRange(roles.Select(role => new Claim("roles", role)));
-        claims.AddRange(permissions.Select(permission => new Claim("permissions", permission)));
+        claims.AddRange(roles.Select(role => new Claim(JwtClaimTypes.Role, role)));
+        claims.AddRange(permissions.Select(permission => new Claim(JwtClaimTypes.Permissions, permission)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key is missing.")));

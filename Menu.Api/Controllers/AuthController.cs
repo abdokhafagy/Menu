@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Menu.Api.Filters;
 using Menu.Application.Common.Models;
 using Menu.Application.DTOs.Auth;
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 
 namespace Menu.Api.Controllers;
 
@@ -20,8 +20,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [Authorize]
-    [RequirePermission("users.create")]
+    [Authorize(Roles = $"{RoleNames.SuperAdmin},{RoleNames.Admin}")]
+    [Authorize(Policy = PermissionNames.UsersCreate)]
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Register([FromBody] RegisterDto dto, CancellationToken ct)
     {
         var result = await _authService.RegisterAsync(dto, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
@@ -62,10 +62,10 @@ public class AuthController : ControllerBase
 
     [HttpGet("sessions")]
     [Authorize]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<SessionDto>>>> Sessions(CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PaginatedResult<SessionDto>>>> Sessions([FromQuery] QueryParameters query, CancellationToken ct)
     {
-        var sessions = await _authService.GetSessionsAsync(User, ct);
-        return Ok(ApiResponse<IReadOnlyList<SessionDto>>.SuccessResponse(sessions));
+        var sessions = await _authService.GetSessionsAsync(User, query, ct);
+        return Ok(ApiResponse<PaginatedResult<SessionDto>>.SuccessResponse(sessions));
     }
 
     [HttpPost("sessions/{sessionId:guid}/revoke")]

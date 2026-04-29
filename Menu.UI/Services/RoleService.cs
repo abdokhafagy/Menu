@@ -16,4 +16,10 @@ public sealed class RoleService : CrudServiceBase<RoleDto, CreateRoleRequest, Up
     {
         return _api.PostStringAsync($"api/roles/{roleId}/permissions", request, ct);
     }
+
+    public async Task<IReadOnlyList<PermissionDto>> GetPermissionsAsync(Guid roleId, CancellationToken ct = default)
+    {
+        return await _api.GetAsync<IReadOnlyList<PermissionDto>>($"api/roles/{roleId}/permissions", null, ct)
+               ?? Array.Empty<PermissionDto>();
+    }
 }

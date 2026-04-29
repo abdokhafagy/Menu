@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Menu.Api.Filters;
 using Menu.Application.Common.Models;
 using Menu.Application.DTOs.Menu;
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 
 namespace Menu.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
+[Authorize(Roles = $"{RoleNames.SuperAdmin},{RoleNames.Admin},{RoleNames.Manager}")]
 public class MenusController : ControllerBase
 {
     private readonly IMenuService _service;
@@ -21,6 +21,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = PermissionNames.MenusView)]
     public async Task<ActionResult<ApiResponse<PaginatedResult<MenuDto>>>> GetAll([FromQuery] QueryParameters query, CancellationToken ct)
     {
         var result = await _service.GetAllAsync(query, ct);
@@ -28,6 +29,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = PermissionNames.MenusView)]
     public async Task<ActionResult<ApiResponse<MenuDto>>> GetById(Guid id, CancellationToken ct)
     {
         var result = await _service.GetByIdAsync(id, ct);
@@ -35,6 +37,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpGet("/api/restaurants/{restaurantId:guid}/menus")]
+    [Authorize(Policy = PermissionNames.MenusView)]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<MenuDto>>>> GetByRestaurant(Guid restaurantId, CancellationToken ct)
     {
         var result = await _service.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 50 }, ct);
@@ -43,7 +46,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpPost]
-    [RequirePermission("menus.create")]
+    [Authorize(Policy = PermissionNames.MenusCreate)]
     public async Task<ActionResult<ApiResponse<MenuDto>>> Create([FromBody] CreateMenuDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -51,7 +54,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [RequirePermission("menus.update")]
+    [Authorize(Policy = PermissionNames.MenusUpdate)]
     public async Task<ActionResult<ApiResponse<MenuDto>>> Update(Guid id, [FromBody] UpdateMenuDto dto, CancellationToken ct)
     {
         var result = await _service.UpdateAsync(id, dto, ct);
@@ -59,7 +62,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [RequirePermission("menus.delete")]
+    [Authorize(Policy = PermissionNames.MenusDelete)]
     public async Task<ActionResult<ApiResponse<string>>> Delete(Guid id, CancellationToken ct)
     {
         await _service.DeleteAsync(id, ct);

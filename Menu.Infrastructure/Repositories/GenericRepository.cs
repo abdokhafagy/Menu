@@ -39,9 +39,9 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
         return await _dbSet.AsNoTracking().ToListAsync(ct);
     }
 
-    public IQueryable<T> Query()
+    public IQueryable<T> Query(bool ignoreQueryFilters = false)
     {
-        return _dbSet.AsQueryable();
+        return ignoreQueryFilters ? _dbSet.IgnoreQueryFilters() : _dbSet.AsQueryable();
     }
 
     public Task AddAsync(T entity, CancellationToken ct = default)

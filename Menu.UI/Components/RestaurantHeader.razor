@@ -1,0 +1,72 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
+<div class="restaurant-header fade-in">
+    @* Cover image *@
+    <div class="restaurant-header__cover">
+        <img src="@CoverImage" alt="@GetName()"
+             class="restaurant-header__cover-img"
+             loading="eager"
+             onerror="this.style.display='none'" />
+        <div class="restaurant-header__cover-overlay" />
+    </div>
+
+    @* Content overlay *@
+    <div class="restaurant-header__content">
+        <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Class="w-100">
+            @* Restaurant logo *@
+            <div class="restaurant-header__logo-wrap">
+                <img src="@LogoUrl" alt="@GetName()"
+                     class="restaurant-header__logo"
+                     onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80'" />
+            </div>
+
+            @* Info *@
+            <MudStack Spacing="0" Class="flex-grow-1">
+                <MudText Typo="Typo.h4" Class="restaurant-header__name">
+                    @GetName()
+                </MudText>
+                @if (!string.IsNullOrWhiteSpace(Restaurant.Description))
+                {
+                    <MudText Typo="Typo.body2" Class="restaurant-header__description">
+                        @(GetDescription())
+                    </MudText>
+                }
+                @if (!string.IsNullOrWhiteSpace(Restaurant.Address))
+                {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                        <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Color="Color.Default" />
+                        <MudText Typo="Typo.caption" Class="restaurant-header__address">
+                            @(Restaurant.Address)
+                        </MudText>
+                    </MudStack>
+                }
+            </MudStack>
+
+            @* Actions slot *@
+            @if (Actions is not null)
+            {
+                <div class="restaurant-header__actions">
+                    @Actions
+                </div>
+            }
+        </MudStack>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PublicRestaurantDto Restaurant { get; set; } = default!;
+    [Inject] private State.AppState AppState { get; set; } = default!;
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    private string GetName() => Restaurant.Name;
+
+    private string GetDescription() => Restaurant.Description ?? string.Empty;
+
+    private string CoverImage => "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80";
+
+    private string LogoUrl => !string.IsNullOrWhiteSpace(Restaurant.LogoUrl)
+        ? Restaurant.LogoUrl
+        : "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80";
+
+    private string Address => Restaurant.Address ?? string.Empty;
+}

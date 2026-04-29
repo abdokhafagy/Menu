@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Menu.Api.Filters;
 using Menu.Application.Common.Models;
 using Menu.Application.DTOs.OptionValue;
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 
 namespace Menu.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = $"{RoleNames.SuperAdmin},{RoleNames.Admin},{RoleNames.Manager}")]
 public class OptionValuesController : ControllerBase
 {
     private readonly IOptionValueService _service;
@@ -21,6 +21,7 @@ public class OptionValuesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = PermissionNames.OptionValuesView)]
     public async Task<ActionResult<ApiResponse<PaginatedResult<OptionValueDto>>>> GetAll([FromQuery] QueryParameters query, CancellationToken ct)
     {
         var result = await _service.GetAllAsync(query, ct);
@@ -28,6 +29,7 @@ public class OptionValuesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = PermissionNames.OptionValuesView)]
     public async Task<ActionResult<ApiResponse<OptionValueDto>>> GetById(Guid id, CancellationToken ct)
     {
         var result = await _service.GetByIdAsync(id, ct);
@@ -35,6 +37,7 @@ public class OptionValuesController : ControllerBase
     }
 
     [HttpGet("/api/item-options/{optionId:guid}/values")]
+    [Authorize(Policy = PermissionNames.OptionValuesView)]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<OptionValueDto>>>> GetByOption(Guid optionId, CancellationToken ct)
     {
         var result = await _service.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 }, ct);
@@ -43,7 +46,7 @@ public class OptionValuesController : ControllerBase
     }
 
     [HttpPost]
-    [RequirePermission("optionvalues.create")]
+    [Authorize(Policy = PermissionNames.OptionValuesCreate)]
     public async Task<ActionResult<ApiResponse<OptionValueDto>>> Create([FromBody] CreateOptionValueDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -51,7 +54,7 @@ public class OptionValuesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [RequirePermission("optionvalues.update")]
+    [Authorize(Policy = PermissionNames.OptionValuesUpdate)]
     public async Task<ActionResult<ApiResponse<OptionValueDto>>> Update(Guid id, [FromBody] UpdateOptionValueDto dto, CancellationToken ct)
     {
         var result = await _service.UpdateAsync(id, dto, ct);
@@ -59,7 +62,7 @@ public class OptionValuesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [RequirePermission("optionvalues.delete")]
+    [Authorize(Policy = PermissionNames.OptionValuesDelete)]
     public async Task<ActionResult<ApiResponse<string>>> Delete(Guid id, CancellationToken ct)
     {
         await _service.DeleteAsync(id, ct);

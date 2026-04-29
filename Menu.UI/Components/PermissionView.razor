@@ -1,0 +1,163 @@
+@namespace Menu.UI.Components
+@implements IDisposable
+@inject UserContextService UserContextService
+@using Menu.UI.Auth
+
+@if (_isVisible)
+{
+    if (Fallback == null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        @ChildContent
+    }
+}
+else if (Fallback != null)
+{
+    @Fallback
+}
+else if (ShowDisabled)
+{
+    <div class="permission-denied-disabled">
+        @ChildContent
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Required permission to view content. Case-insensitive.
+    /// </summary>
+    [Parameter]
+    public string Permission { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Required permissions (all must be present). Case-insensitive.
+    /// Leave empty to skip permission check and use only roles.
+    /// </summary>
+    [Parameter]
+    public string[] Permissions { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Required role to view content. Case-insensitive.
+    /// Leave empty to skip role check and use only permissions.
+    /// </summary>
+    [Parameter]
+    public string Role { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Required roles (any one can grant access). Case-insensitive.
+    /// Leave empty to skip role check and use only permissions.
+    /// </summary>
+    [Parameter]
+    public string[] Roles { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    /// If true, shows content in disabled state when user lacks permission (instead of hiding).
+    /// </summary>
+    [Parameter]
+    public bool ShowDisabled { get; set; }
+
+    /// <summary>
+    /// Content to show if user lacks permission (overrides ShowDisabled).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Fallback { get; set; }
+
+    /// <summary>
+    /// The content to conditionally render.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool _isVisible;
+    private bool _initialized;
+
+    protected override void OnInitialized()
+    {
+        EvaluatePermissions();
+        _initialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_initialized)
+        {
+            EvaluatePermissions();
+        }
+    }
+
+    private void EvaluatePermissions()
+    {
+        _isVisible = CheckAccess();
+    }
+
+    private bool CheckAccess()
+    {
+        // If no constraints specified, show by default
+        if (string.IsNullOrWhiteSpace(Permission) &&
+            Permissions.Length == 0 &&
+            string.IsNullOrWhiteSpace(Role) &&
+            Roles.Length == 0)
+        {
+            return true;
+        }
+
+        // Check if user is authenticated
+        if (!UserContextService.IsAuthenticated())
+        {
+            return false;
+        }
+
+        // SuperAdmin bypasses every permission/role gate.
+        if (UserContextService.HasRole(AppRoles.SuperAdmin))
+        {
+            return true;
+        }
+
+        var hasRequiredRoles = CheckRoles();
+        var hasRequiredPermissions = CheckPermissions();
+
+        // Only permissions specified
+        if ((string.IsNullOrWhiteSpace(Role) && Roles.Length == 0) &&
+            (!string.IsNullOrWhiteSpace(Permission) || Permissions.Length > 0))
+        {
+            return hasRequiredPermissions;
+        }
+
+        // Only roles specified
+        if ((string.IsNullOrWhiteSpace(Role) && Roles.Length == 0) == false &&
+            (string.IsNullOrWhiteSpace(Permission) && Permissions.Length == 0))
+        {
+            return hasRequiredRoles;
+        }
+
+        // Both specified — require both
+        return hasRequiredRoles && hasRequiredPermissions;
+    }
+
+    private bool CheckRoles()
+    {
+        if (string.IsNullOrWhiteSpace(Role) && Roles.Length == 0)
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(Role))
+            return UserContextService.HasRole(Role);
+
+        return UserContextService.HasAnyRole(Roles);
+    }
+
+    private bool CheckPermissions()
+    {
+        if (string.IsNullOrWhiteSpace(Permission) && Permissions.Length == 0)
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(Permission))
+            return UserContextService.HasPermission(Permission);
+
+        return UserContextService.HasAllPermissions(Permissions);
+    }
+
+    void IDisposable.Dispose() { }
+}

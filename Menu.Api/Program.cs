@@ -3,15 +3,18 @@ using System.Text.Json.Serialization;
 
 using FluentValidation.AspNetCore;
 
+using Menu.Api.Authorization;
 using Menu.Api.Middleware;
 using Menu.Application;
 using Menu.Infrastructure;
 using Menu.Infrastructure.Data;
 using Menu.Infrastructure.Data.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Menu.Domain.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +34,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -40,11 +44,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = JwtClaimTypes.Role,
+            NameClaimType = JwtClaimTypes.UserId
         };
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddMemoryCache();
 builder.Services.AddResponseCaching(); // Needed for [ResponseCache]
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

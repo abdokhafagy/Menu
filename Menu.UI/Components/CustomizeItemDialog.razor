@@ -1,70 +1,66 @@
-<MudDialog>
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@inject Menu.UI.State.AppState AppState
+
+<MudDialog Class="@GetDialogClass()" Style="@GetDialogStyle()">
     <DialogContent>
-        <MudStack Spacing="2">
+        <MudStack Spacing="2" Class="@GetStackClass()">
             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                <MudText Typo="Typo.h5">@Item.Name</MudText>
-                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Base @Item.Price.ToString("0.00")</MudChip>
+                <MudText Typo="Typo.h5">@GetCurrentItemName()</MudText>
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@L["MenuItem.Base"] @Item.Price.ToString("0.00")</MudChip>
             </MudStack>
 
-            @if (!string.IsNullOrWhiteSpace(Item.Description))
+            @if (!string.IsNullOrWhiteSpace(GetCurrentItemDescription()))
             {
-                <MudText Typo="Typo.body2" Class="public-menu-muted">@Item.Description</MudText>
+                <MudText Typo="Typo.body2" Class="public-menu-muted">@GetCurrentItemDescription()</MudText>
             }
 
-            @foreach (var option in Item.Options.OrderBy(o => o.Name))
+            @foreach (var option in _sortedOptions)
             {
                 var selectedCount = CountSelected(option.Id);
-                <MudPaper Class="public-option-panel pa-3" Elevation="0">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <MudText Typo="Typo.subtitle1">@option.Name</MudText>
-                        <MudText Typo="Typo.caption" Class="public-menu-muted">@GetSelectionHint(option, selectedCount)</MudText>
+                var values = _sortedValuesByOption[option.Id];
+                <MudPaper Class="public-option-panel pa-3" Elevation="0" @key="option.Id">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="option-header">
+                        <MudText Typo="Typo.subtitle1" Class="option-name">@GetCurrentOptionName(option)</MudText>
+                        <MudText Typo="Typo.caption" Class="public-menu-muted">@GetLocalizedSelectionHint(option, selectedCount)</MudText>
                     </MudStack>
 
                     @if (IsSingleSelection(option))
                     {
                         <MudRadioGroup T="Guid?"
                                        Value="@GetSingleSelection(option.Id)"
-                                       ValueChanged="value => SetSingleSelection(option, value)">
-                            @foreach (var value in option.Values.OrderBy(v => v.DisplayOrder).ThenBy(v => v.Value))
+                                       ValueChanged="value => SetSingleSelection(option, value)"
+                                       Class="option-group">
+                            @foreach (var value in values)
                             {
-                                <MudRadio T="Guid?" Value="@value.Id" Color="Color.Primary">
-                                    @GetValueLabel(value)
+                                <MudRadio T="Guid?" Value="@value.Id" Color="Color.Primary" Class="rtl-form-control" @key="value.Id">
+                                    @GetLocalizedValueLabel(value)
                                 </MudRadio>
                             }
                         </MudRadioGroup>
                     }
                     else
                     {
-                        @foreach (var value in option.Values.OrderBy(v => v.DisplayOrder).ThenBy(v => v.Value))
-                        {
-                            <MudCheckBox T="bool"
-                                         Value="@IsMultiSelected(option.Id, value.Id)"
-                                         ValueChanged="isSelected => ToggleMultiSelection(option, value, isSelected)"
-                                         Disabled="@IsMultiSelectionLocked(option, value.Id)">
-                                @GetValueLabel(value)
-                            </MudCheckBox>
-                        }
+                        <MudStack Spacing="1" Class="option-group">
+                            @foreach (var value in values)
+                            {
+                                <MudCheckBox T="bool"
+                                             Value="@IsMultiSelected(option.Id, value.Id)"
+                                             ValueChanged="isSelected => ToggleMultiSelection(option, value, isSelected)"
+                                             Disabled="@IsMultiSelectionLocked(option, value.Id)"
+                                             Class="rtl-form-control"
+                                             @key="value.Id">
+                                    @GetLocalizedValueLabel(value)
+                                </MudCheckBox>
+                            }
+                        </MudStack>
                     }
                 </MudPaper>
             }
-
-            @if (!string.IsNullOrWhiteSpace(_validationMessage))
-            {
-                <MudAlert Severity="Severity.Error" Dense="true">@_validationMessage</MudAlert>
-            }
-
-            <MudPaper Class="public-total-panel pa-3" Elevation="0">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.subtitle1">Total</MudText>
-                    <MudText Typo="Typo.h6">@CurrentTotal.ToString("0.00")</MudText>
-                </MudStack>
-            </MudPaper>
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="ConfirmAsync">
-            Add To Cart
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Check" OnClick="ConfirmAsync">
+            @L["Common.Ok"]
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -74,51 +70,89 @@
     [Parameter, EditorRequired] public PublicMenuItemDetailDto Item { get; set; } = default!;
 
     private readonly Dictionary<Guid, HashSet<Guid>> _selectedValuesByOption = new();
-    private string? _validationMessage;
+    private List<PublicItemOptionDto> _sortedOptions = new();
+    private Dictionary<Guid, List<PublicOptionValueDto>> _sortedValuesByOption = new();
 
     protected override void OnInitialized()
     {
         InitializeDefaults();
+        BuildSortedCaches();
     }
 
-    private void InitializeDefaults()
+    private void BuildSortedCaches()
     {
-        foreach (var option in Item.Options)
-        {
-            var selected = option.Values
-                .Where(v => v.IsDefault)
+        _sortedOptions = Item.Options
+            .OrderBy(GetCurrentOptionName, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        _sortedValuesByOption = Item.Options.ToDictionary(
+            o => o.Id,
+            o => o.Values
                 .OrderBy(v => v.DisplayOrder)
-                .Select(v => v.Id)
-                .ToHashSet();
-
-            var max = GetEffectiveMax(option);
-            if (selected.Count > max)
-            {
-                selected = selected.Take(max).ToHashSet();
-            }
-
-            if (IsSingleSelection(option) && selected.Count > 1)
-            {
-                selected = selected.Take(1).ToHashSet();
-            }
-
-            _selectedValuesByOption[option.Id] = selected;
-        }
+                .ThenBy(GetCurrentValueName, StringComparer.CurrentCultureIgnoreCase)
+                .ToList());
     }
 
-    private decimal CurrentTotal
+    #region Localization & RTL Helpers
+
+    private bool IsArabic()
+        => AppState.Culture == "ar";
+
+    private string GetDialogClass()
+        => IsArabic() ? "customize-dialog-rtl" : string.Empty;
+
+    private string GetDialogStyle()
+        => IsArabic() ? "direction: rtl;" : string.Empty;
+
+    private string GetStackClass()
+        => IsArabic() ? "dialog-content-rtl" : string.Empty;
+
+    #endregion
+
+    #region Current Language Getters
+
+    private string GetCurrentItemName()
+        => IsArabic() && !string.IsNullOrWhiteSpace(Item.NameAr)
+            ? Item.NameAr
+            : Item.Name;
+
+    private string GetCurrentItemDescription()
+        => IsArabic() && !string.IsNullOrWhiteSpace(Item.DescriptionAr)
+            ? Item.DescriptionAr
+            : Item.Description ?? string.Empty;
+
+    private string GetCurrentOptionName(PublicItemOptionDto option)
+        => IsArabic() && !string.IsNullOrWhiteSpace(option.NameAr)
+            ? option.NameAr
+            : option.Name;
+
+    private string GetCurrentValueName(PublicOptionValueDto value)
+        => IsArabic() && !string.IsNullOrWhiteSpace(value.ValueAr)
+            ? value.ValueAr
+            : value.Value;
+
+    #endregion
+
+    #region Display Label Builders
+
+    private string GetLocalizedValueLabel(PublicOptionValueDto value)
+        => $"{GetCurrentValueName(value)} ({GetOptionValueTotal(value):0.00})";
+
+    private decimal GetOptionValueTotal(PublicOptionValueDto value)
+        => Item.Price + value.PriceModifier;
+
+    private string GetLocalizedSelectionHint(PublicItemOptionDto option, int selectedCount)
     {
-        get
-        {
-            var modifiers = Item.Options
-                .SelectMany(option => option.Values
-                    .Where(value => _selectedValuesByOption.TryGetValue(option.Id, out var set) && set.Contains(value.Id))
-                    .Select(value => value.PriceModifier))
-                .Sum();
+        var min = GetEffectiveMin(option);
+        var max = GetEffectiveMax(option);
+        var maxText = max == int.MaxValue ? L["MenuItem.Any"].Value : max.ToString();
 
-            return Item.Price + modifiers;
-        }
+        return L["MenuItem.SelectionHint", selectedCount, min, maxText].Value;
     }
+
+    #endregion
+
+    #region Selection Logic
 
     private static bool IsSingleSelection(PublicItemOptionDto option)
         => string.Equals(option.SelectionType, "Single", StringComparison.OrdinalIgnoreCase);
@@ -166,8 +200,6 @@
         {
             selected.Add(valueId.Value);
         }
-
-        _validationMessage = null;
     }
 
     private bool IsMultiSelected(Guid optionId, Guid valueId)
@@ -205,8 +237,6 @@
         {
             selected.Remove(value.Id);
         }
-
-        _validationMessage = null;
     }
 
     private HashSet<Guid> GetOrCreateSelection(Guid optionId)
@@ -220,81 +250,40 @@
         return set;
     }
 
-    private string GetSelectionHint(PublicItemOptionDto option, int selectedCount)
-    {
-        var min = GetEffectiveMin(option);
-        var max = GetEffectiveMax(option);
-        var maxText = max == int.MaxValue ? "Any" : max.ToString();
-
-        return $"Selected {selectedCount} | Min {min} | Max {maxText}";
-    }
-
-    private static string GetValueLabel(PublicOptionValueDto value)
-    {
-        var modifier = value.PriceModifier;
-        var modifierText = modifier == 0
-            ? "No extra"
-            : modifier > 0
-                ? $"+{modifier:0.00}"
-                : $"{modifier:0.00}";
-
-        return $"{value.Value} ({modifierText})";
-    }
-
-    private async Task ConfirmAsync()
-    {
-        _validationMessage = ValidateSelections();
-        if (!string.IsNullOrWhiteSpace(_validationMessage))
-        {
-            return;
-        }
-
-        MudDialog.Close(DialogResult.Ok(CreateCartLine()));
-        await Task.CompletedTask;
-    }
-
-    private string? ValidateSelections()
+    private void InitializeDefaults()
     {
         foreach (var option in Item.Options)
         {
-            var selectedCount = CountSelected(option.Id);
-            var min = GetEffectiveMin(option);
+            var selected = option.Values
+                .Where(v => v.IsDefault)
+                .OrderBy(v => v.DisplayOrder)
+                .Select(v => v.Id)
+                .ToHashSet();
+
             var max = GetEffectiveMax(option);
-
-            if (selectedCount < min)
+            if (selected.Count > max)
             {
-                return $"{option.Name}: select at least {min}.";
+                selected = selected.Take(max).ToHashSet();
             }
 
-            if (selectedCount > max)
+            if (IsSingleSelection(option) && selected.Count > 1)
             {
-                return $"{option.Name}: select at most {max}.";
+                selected = selected.Take(1).ToHashSet();
             }
+
+            _selectedValuesByOption[option.Id] = selected;
         }
-
-        return null;
     }
 
-    private CartLine CreateCartLine()
+    #endregion
+
+    #region Dialog Actions
+
+    private async Task ConfirmAsync()
     {
-        var selectedDetails = Item.Options
-            .SelectMany(option => option.Values
-                .Where(value => _selectedValuesByOption.TryGetValue(option.Id, out var set) && set.Contains(value.Id))
-                .Select(value => new CartLineSelection(option.Id, option.Name, value.Id, value.Value, value.PriceModifier)))
-            .ToList();
-
-        return new CartLine(
-            Guid.NewGuid(),
-            Item.Id,
-            Item.Name,
-            Item.Price,
-            CurrentTotal,
-            1,
-            selectedDetails);
+        MudDialog.Close(DialogResult.Ok(true));
+        await Task.CompletedTask;
     }
 
-    private void Cancel()
-    {
-        MudDialog.Cancel();
-    }
+    #endregion
 }

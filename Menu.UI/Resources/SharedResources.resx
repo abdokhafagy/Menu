@@ -1,0 +1,664 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App.Title" xml:space="preserve">
+    <value>Menu Management</value>
+  </data>
+  <data name="Common.Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="Theme.Dark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Language.Toggle" xml:space="preserve">
+    <value>Language selector</value>
+  </data>
+  <data name="Navigation.Workspace" xml:space="preserve">
+    <value>Workspace</value>
+  </data>
+  <data name="Navigation.SectionOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Navigation.SectionManagement" xml:space="preserve">
+    <value>Management</value>
+  </data>
+  <data name="Navigation.SectionAccess" xml:space="preserve">
+    <value>Access</value>
+  </data>
+  <data name="Navigation.Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Navigation.Sessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Navigation.Restaurants" xml:space="preserve">
+    <value>Restaurants</value>
+  </data>
+  <data name="Navigation.Menus" xml:space="preserve">
+    <value>Menus</value>
+  </data>
+  <data name="Navigation.Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Navigation.MenuItems" xml:space="preserve">
+    <value>Menu Items</value>
+  </data>
+  <data name="Navigation.ItemOptions" xml:space="preserve">
+    <value>Item Options</value>
+  </data>
+  <data name="Navigation.OptionValues" xml:space="preserve">
+    <value>Option Values</value>
+  </data>
+  <data name="Navigation.Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Navigation.Roles" xml:space="preserve">
+    <value>Roles</value>
+  </data>
+  <data name="Navigation.Permissions" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="Common.Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Common.Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="Common.Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="Common.Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Users.PageTitle" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Users.SubTitle" xml:space="preserve">
+    <value>Review application users</value>
+  </data>
+  <data name="Users.Add" xml:space="preserve">
+    <value>Add User</value>
+  </data>
+  <data name="Users.Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Users.Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Users.FullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="Users.Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Users.Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Users.CreateDialogTitle" xml:space="preserve">
+    <value>Create User</value>
+  </data>
+  <data name="Users.EditDialogTitle" xml:space="preserve">
+    <value>Edit User</value>
+  </data>
+  <data name="Users.CreatedSuccess" xml:space="preserve">
+    <value>User created successfully.</value>
+  </data>
+  <data name="Users.UpdatedSuccess" xml:space="preserve">
+    <value>User updated successfully.</value>
+  </data>
+  <data name="Users.DeleteTitle" xml:space="preserve">
+    <value>Delete User</value>
+  </data>
+  <data name="Users.DeleteMessage" xml:space="preserve">
+    <value>Delete user '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="Users.DeletedSuccess" xml:space="preserve">
+    <value>User deleted.</value>
+  </data>
+  <data name="Menus.PageTitle" xml:space="preserve">
+    <value>Menus</value>
+  </data>
+  <data name="Menus.SubTitle" xml:space="preserve">
+    <value>Menus connected to restaurants</value>
+  </data>
+  <data name="Menus.Add" xml:space="preserve">
+    <value>Add Menu</value>
+  </data>
+  <data name="Menus.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Menus.Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Menus.Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Menus.CreateDialogTitle" xml:space="preserve">
+    <value>Add Menu</value>
+  </data>
+  <data name="Menus.EditDialogTitle" xml:space="preserve">
+    <value>Edit Menu</value>
+  </data>
+  <data name="Menus.CreatedSuccess" xml:space="preserve">
+    <value>Menu created.</value>
+  </data>
+  <data name="Menus.UpdatedSuccess" xml:space="preserve">
+    <value>Menu updated.</value>
+  </data>
+  <data name="Menus.DeleteTitle" xml:space="preserve">
+    <value>Delete Menu</value>
+  </data>
+  <data name="Menus.DeleteMessage" xml:space="preserve">
+    <value>Delete menu '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="Menus.DeletedSuccess" xml:space="preserve">
+    <value>Menu deleted.</value>
+  </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common.Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common.Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Common.No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Dashboard.PageTitle" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Dashboard.SubTitle" xml:space="preserve">
+    <value>Quick overview of your menu management workspace</value>
+  </data>
+  <data name="Dashboard.Restaurants" xml:space="preserve">
+    <value>Restaurants</value>
+  </data>
+  <data name="Dashboard.Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Dashboard.Menus" xml:space="preserve">
+    <value>Menus</value>
+  </data>
+  <data name="Dashboard.Items" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="NotFound.PageTitle" xml:space="preserve">
+    <value>Not Found</value>
+  </data>
+  <data name="NotFound.Title" xml:space="preserve">
+    <value>Page not found</value>
+  </data>
+  <data name="NotFound.Message" xml:space="preserve">
+    <value>The requested page does not exist.</value>
+  </data>
+  <data name="NotFound.GoDashboard" xml:space="preserve">
+    <value>Go to dashboard</value>
+  </data>
+  <data name="Unauthorized.PageTitle" xml:space="preserve">
+    <value>Unauthorized</value>
+  </data>
+  <data name="Unauthorized.Title" xml:space="preserve">
+    <value>Access denied</value>
+  </data>
+  <data name="Unauthorized.Message" xml:space="preserve">
+    <value>Your session is not authorized for this page. Please sign in again.</value>
+  </data>
+  <data name="Unauthorized.GoToLogin" xml:space="preserve">
+    <value>Go to login</value>
+  </data>
+  <data name="PublicMenuLayout.Title" xml:space="preserve">
+    <value>Restaurant Menu</value>
+  </data>
+  <data name="PublicMenuLayout.SubTitle" xml:space="preserve">
+    <value>Guest Read-Only View</value>
+  </data>
+  <data name="Categories.PageTitle" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Categories.SubTitle" xml:space="preserve">
+    <value>Category groups inside menus</value>
+  </data>
+  <data name="Categories.Add" xml:space="preserve">
+    <value>Add Category</value>
+  </data>
+  <data name="Categories.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Categories.NameAr" xml:space="preserve">
+    <value>Name AR</value>
+  </data>
+  <data name="Categories.Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="Categories.Menu" xml:space="preserve">
+    <value>Menu</value>
+  </data>
+  <data name="Categories.CreateDialogTitle" xml:space="preserve">
+    <value>Add Category</value>
+  </data>
+  <data name="Categories.EditDialogTitle" xml:space="preserve">
+    <value>Edit Category</value>
+  </data>
+  <data name="Categories.CreatedSuccess" xml:space="preserve">
+    <value>Category created.</value>
+  </data>
+  <data name="Categories.UpdatedSuccess" xml:space="preserve">
+    <value>Category updated.</value>
+  </data>
+  <data name="Categories.DeleteTitle" xml:space="preserve">
+    <value>Delete Category</value>
+  </data>
+  <data name="Categories.DeleteMessage" xml:space="preserve">
+    <value>Delete category '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="Categories.DeletedSuccess" xml:space="preserve">
+    <value>Category deleted.</value>
+  </data>
+  <data name="ItemOptions.PageTitle" xml:space="preserve">
+    <value>Item Options</value>
+  </data>
+  <data name="ItemOptions.SubTitle" xml:space="preserve">
+    <value>Modifiers and option groups</value>
+  </data>
+  <data name="ItemOptions.Add" xml:space="preserve">
+    <value>Add Option</value>
+  </data>
+  <data name="ItemOptions.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ItemOptions.Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="ItemOptions.Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="ItemOptions.Item" xml:space="preserve">
+    <value>Item</value>
+  </data>
+  <data name="ItemOptions.CreateDialogTitle" xml:space="preserve">
+    <value>Add Option</value>
+  </data>
+  <data name="ItemOptions.EditDialogTitle" xml:space="preserve">
+    <value>Edit Option</value>
+  </data>
+  <data name="ItemOptions.CreatedSuccess" xml:space="preserve">
+    <value>Item option created.</value>
+  </data>
+  <data name="ItemOptions.UpdatedSuccess" xml:space="preserve">
+    <value>Item option updated.</value>
+  </data>
+  <data name="ItemOptions.DeleteTitle" xml:space="preserve">
+    <value>Delete Option</value>
+  </data>
+  <data name="ItemOptions.DeleteMessage" xml:space="preserve">
+    <value>Delete option '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="ItemOptions.DeletedSuccess" xml:space="preserve">
+    <value>Item option deleted.</value>
+  </data>
+  <data name="OptionValues.PageTitle" xml:space="preserve">
+    <value>Option Values</value>
+  </data>
+  <data name="OptionValues.SubTitle" xml:space="preserve">
+    <value>Selectable values in option groups</value>
+  </data>
+  <data name="OptionValues.Add" xml:space="preserve">
+    <value>Add Value</value>
+  </data>
+  <data name="OptionValues.Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="OptionValues.PriceDelta" xml:space="preserve">
+    <value>Price Delta</value>
+  </data>
+  <data name="OptionValues.Default" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="OptionValues.Option" xml:space="preserve">
+    <value>Option</value>
+  </data>
+  <data name="OptionValues.CreateDialogTitle" xml:space="preserve">
+    <value>Add Value</value>
+  </data>
+  <data name="OptionValues.EditDialogTitle" xml:space="preserve">
+    <value>Edit Value</value>
+  </data>
+  <data name="OptionValues.CreatedSuccess" xml:space="preserve">
+    <value>Option value created.</value>
+  </data>
+  <data name="OptionValues.UpdatedSuccess" xml:space="preserve">
+    <value>Option value updated.</value>
+  </data>
+  <data name="OptionValues.DeleteTitle" xml:space="preserve">
+    <value>Delete Value</value>
+  </data>
+  <data name="OptionValues.DeleteMessage" xml:space="preserve">
+    <value>Delete option value '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="OptionValues.DeletedSuccess" xml:space="preserve">
+    <value>Option value deleted.</value>
+  </data>
+  <data name="MenuItems.PageTitle" xml:space="preserve">
+    <value>Menu Items</value>
+  </data>
+  <data name="MenuItems.SubTitle" xml:space="preserve">
+    <value>Items shown to customers</value>
+  </data>
+  <data name="MenuItems.Add" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MenuItems.Image" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="MenuItems.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="MenuItems.Price" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="MenuItems.Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="MenuItems.Available" xml:space="preserve">
+    <value>Available</value>
+  </data>
+  <data name="MenuItems.CreateDialogTitle" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MenuItems.EditDialogTitle" xml:space="preserve">
+    <value>Edit Item</value>
+  </data>
+  <data name="MenuItems.CreatedSuccess" xml:space="preserve">
+    <value>Item created.</value>
+  </data>
+  <data name="MenuItems.UpdatedSuccess" xml:space="preserve">
+    <value>Item updated.</value>
+  </data>
+  <data name="MenuItems.DeleteTitle" xml:space="preserve">
+    <value>Delete Item</value>
+  </data>
+  <data name="MenuItems.DeleteMessage" xml:space="preserve">
+    <value>Delete item '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="MenuItems.DeletedSuccess" xml:space="preserve">
+    <value>Item deleted.</value>
+  </data>
+  <data name="Roles.PageTitle" xml:space="preserve">
+    <value>Roles</value>
+  </data>
+  <data name="Roles.SubTitle" xml:space="preserve">
+    <value>Role and access management</value>
+  </data>
+  <data name="Roles.Add" xml:space="preserve">
+    <value>Add Role</value>
+  </data>
+  <data name="Roles.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Roles.Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Roles.CreateDialogTitle" xml:space="preserve">
+    <value>Add Role</value>
+  </data>
+  <data name="Roles.EditDialogTitle" xml:space="preserve">
+    <value>Edit Role</value>
+  </data>
+  <data name="Roles.CreatedSuccess" xml:space="preserve">
+    <value>Role created.</value>
+  </data>
+  <data name="Roles.UpdatedSuccess" xml:space="preserve">
+    <value>Role updated.</value>
+  </data>
+  <data name="Roles.DeleteTitle" xml:space="preserve">
+    <value>Delete Role</value>
+  </data>
+  <data name="Roles.DeleteMessage" xml:space="preserve">
+    <value>Delete role '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="Roles.DeletedSuccess" xml:space="preserve">
+    <value>Role deleted.</value>
+  </data>
+  <data name="Permissions.PageTitle" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="Permissions.SubTitle" xml:space="preserve">
+    <value>System permission catalog</value>
+  </data>
+  <data name="Permissions.Add" xml:space="preserve">
+    <value>Add Permission</value>
+  </data>
+  <data name="Permissions.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Permissions.Module" xml:space="preserve">
+    <value>Module</value>
+  </data>
+  <data name="Permissions.Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Permissions.CreateDialogTitle" xml:space="preserve">
+    <value>Add Permission</value>
+  </data>
+  <data name="Permissions.EditDialogTitle" xml:space="preserve">
+    <value>Edit Permission</value>
+  </data>
+  <data name="Permissions.CreatedSuccess" xml:space="preserve">
+    <value>Permission created.</value>
+  </data>
+  <data name="Permissions.UpdatedSuccess" xml:space="preserve">
+    <value>Permission updated.</value>
+  </data>
+  <data name="Permissions.DeleteTitle" xml:space="preserve">
+    <value>Delete Permission</value>
+  </data>
+  <data name="Permissions.DeleteMessage" xml:space="preserve">
+    <value>Delete permission '{0}'? This cannot be undone.</value>
+  </data>
+  <data name="Permissions.DeletedSuccess" xml:space="preserve">
+    <value>Permission deleted.</value>
+  </data>
+  <data name="Sessions.PageTitle" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Sessions.SubTitle" xml:space="preserve">
+    <value>Monitor and revoke active sessions</value>
+  </data>
+  <data name="Sessions.Device" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="Sessions.IpAddress" xml:space="preserve">
+    <value>IP Address</value>
+  </data>
+  <data name="Sessions.Expires" xml:space="preserve">
+    <value>Expires</value>
+  </data>
+  <data name="Sessions.Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Sessions.Revoked" xml:space="preserve">
+    <value>Revoked</value>
+  </data>
+  <data name="Sessions.Revoke" xml:space="preserve">
+    <value>Revoke</value>
+  </data>
+  <data name="Sessions.RevokedSuccess" xml:space="preserve">
+    <value>Session revoked.</value>
+  </data>
+  <data name="MenuItem.New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="MenuItem.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="MenuItem.CurrentlyUnavailable" xml:space="preserve">
+    <value>Currently unavailable</value>
+  </data>
+  <data name="MenuItem.Customizable" xml:space="preserve">
+    <value>Customizable</value>
+  </data>
+  <data name="MenuItem.Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="Common.Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Common.AddToCart" xml:space="preserve">
+    <value>Add To Cart</value>
+  </data>
+  <data name="MenuItem.Base" xml:space="preserve">
+    <value>Base</value>
+  </data>
+  <data name="MenuItem.NoExtra" xml:space="preserve">
+    <value>No extra</value>
+  </data>
+  <data name="MenuItem.Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="MenuItem.Optional" xml:space="preserve">
+    <value>Optional</value>
+  </data>
+  <data name="MenuItem.Any" xml:space="preserve">
+    <value>Any</value>
+  </data>
+  <data name="MenuItem.SelectionHint" xml:space="preserve">
+    <value>Selected {0} | Min {1} | Max {2}</value>
+  </data>
+  <data name="MenuItem.SelectAtLeast" xml:space="preserve">
+    <value>select at least {0}.</value>
+  </data>
+  <data name="MenuItem.SelectAtMost" xml:space="preserve">
+    <value>select at most {0}.</value>
+  </data>
+  <data name="Navigation.AccessControl" xml:space="preserve">
+    <value>Access Control</value>
+  </data>
+  <data name="AccessControl.PageTitle" xml:space="preserve">
+    <value>Access Control</value>
+  </data>
+  <data name="AccessControl.SubTitle" xml:space="preserve">
+    <value>Manage which permissions are granted to each role.</value>
+  </data>
+  <data name="AccessControl.SaveAll" xml:space="preserve">
+    <value>Save All</value>
+  </data>
+  <data name="AccessControl.SaveRole" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="AccessControl.SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="AccessControl.ClearAll" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="AccessControl.Unsaved" xml:space="preserve">
+    <value>Unsaved</value>
+  </data>
+  <data name="AccessControl.SaveSuccess" xml:space="preserve">
+    <value>Permissions updated.</value>
+  </data>
+  <data name="AccessControl.SaveAllSuccess" xml:space="preserve">
+    <value>All changes saved.</value>
+  </data>
+  <data name="AccessControl.SaveError" xml:space="preserve">
+    <value>Failed to save: {0}</value>
+  </data>
+  <data name="AccessControl.LoadError" xml:space="preserve">
+    <value>Could not load roles or permissions: {0}</value>
+  </data>
+  <data name="AccessControl.NoRoles" xml:space="preserve">
+    <value>No roles available.</value>
+  </data>
+  <data name="AccessControl.UncategorizedModule" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="AccessControl.SelfRoleNotice" xml:space="preserve">
+    <value>You changed permissions on a role you hold. Sign out and back in to refresh your access.</value>
+  </data>
+  <data name="Common.Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Common.Saving" xml:space="preserve">
+    <value>Saving...</value>
+  </data>
+  <data name="Common.Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Users.Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Users.NoRoles" xml:space="preserve">
+    <value>No roles available</value>
+  </data>
+  <data name="Users.NoRoleSelected" xml:space="preserve">
+    <value>(none)</value>
+  </data>
+  <data name="Users.RoleRequired" xml:space="preserve">
+    <value>Please select a role.</value>
+  </data>
+  <data name="Users.RoleAssignError" xml:space="preserve">
+    <value>User saved, but role assignment failed: {0}</value>
+  </data>
+</root>

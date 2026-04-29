@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Menu.Application\Menu.Application.csproj" />
     <ProjectReference Include="..\Menu.Domain\Menu.Domain.csproj" />
   </ItemGroup>

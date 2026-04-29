@@ -1,4 +1,5 @@
 using Menu.Domain.Entities;
+using Menu.Domain.Authorization;
 using Menu.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,43 +9,100 @@ public static class DbSeeder
 {
     private static readonly (string Name, string Module)[] RequiredPermissions =
     {
-        ("restaurants.view", "Restaurants"),
-        ("restaurants.create", "Restaurants"),
-        ("restaurants.update", "Restaurants"),
-        ("restaurants.delete", "Restaurants"),
-        ("menus.view", "Menus"),
-        ("menus.create", "Menus"),
-        ("menus.update", "Menus"),
-        ("menus.delete", "Menus"),
-        ("categories.view", "Categories"),
-        ("categories.create", "Categories"),
-        ("categories.update", "Categories"),
-        ("categories.delete", "Categories"),
-        ("menuitems.view", "MenuItems"),
-        ("menuitems.create", "MenuItems"),
-        ("menuitems.update", "MenuItems"),
-        ("menuitems.delete", "MenuItems"),
-        ("itemoptions.view", "ItemOptions"),
-        ("itemoptions.create", "ItemOptions"),
-        ("itemoptions.update", "ItemOptions"),
-        ("itemoptions.delete", "ItemOptions"),
-        ("optionvalues.view", "OptionValues"),
-        ("optionvalues.create", "OptionValues"),
-        ("optionvalues.update", "OptionValues"),
-        ("optionvalues.delete", "OptionValues"),
-        ("permissions.view", "Permissions"),
-        ("permissions.create", "Permissions"),
-        ("permissions.update", "Permissions"),
-        ("permissions.delete", "Permissions"),
-        ("roles.view", "Roles"),
-        ("roles.create", "Roles"),
-        ("roles.update", "Roles"),
-        ("roles.delete", "Roles"),
-        ("users.view", "Users"),
-        ("users.create", "Users"),
-        ("users.update", "Users"),
-        ("users.delete", "Users")
+        (PermissionNames.RestaurantsView, "Restaurants"),
+        (PermissionNames.RestaurantsCreate, "Restaurants"),
+        (PermissionNames.RestaurantsUpdate, "Restaurants"),
+        (PermissionNames.RestaurantsDelete, "Restaurants"),
+        (PermissionNames.MenusView, "Menus"),
+        (PermissionNames.MenusCreate, "Menus"),
+        (PermissionNames.MenusUpdate, "Menus"),
+        (PermissionNames.MenusDelete, "Menus"),
+        (PermissionNames.CategoriesView, "Categories"),
+        (PermissionNames.CategoriesCreate, "Categories"),
+        (PermissionNames.CategoriesUpdate, "Categories"),
+        (PermissionNames.CategoriesDelete, "Categories"),
+        (PermissionNames.MenuItemsView, "MenuItems"),
+        (PermissionNames.MenuItemsCreate, "MenuItems"),
+        (PermissionNames.MenuItemsUpdate, "MenuItems"),
+        (PermissionNames.MenuItemsDelete, "MenuItems"),
+        (PermissionNames.ItemOptionsView, "ItemOptions"),
+        (PermissionNames.ItemOptionsCreate, "ItemOptions"),
+        (PermissionNames.ItemOptionsUpdate, "ItemOptions"),
+        (PermissionNames.ItemOptionsDelete, "ItemOptions"),
+        (PermissionNames.OptionValuesView, "OptionValues"),
+        (PermissionNames.OptionValuesCreate, "OptionValues"),
+        (PermissionNames.OptionValuesUpdate, "OptionValues"),
+        (PermissionNames.OptionValuesDelete, "OptionValues"),
+        (PermissionNames.PermissionsView, "Permissions"),
+        (PermissionNames.PermissionsCreate, "Permissions"),
+        (PermissionNames.PermissionsUpdate, "Permissions"),
+        (PermissionNames.PermissionsDelete, "Permissions"),
+        (PermissionNames.RolesView, "Roles"),
+        (PermissionNames.RolesCreate, "Roles"),
+        (PermissionNames.RolesUpdate, "Roles"),
+        (PermissionNames.RolesDelete, "Roles"),
+        (PermissionNames.UsersView, "Users"),
+        (PermissionNames.UsersCreate, "Users"),
+        (PermissionNames.UsersUpdate, "Users"),
+        (PermissionNames.UsersDelete, "Users"),
+        (PermissionNames.SessionsView, "Sessions"),
+        (PermissionNames.SessionsCreate, "Sessions"),
+        (PermissionNames.SessionsUpdate, "Sessions"),
+        (PermissionNames.SessionsDelete, "Sessions")
     };
+
+    private static readonly string[] SuperAdminPermissions = RequiredPermissions.Select(x => x.Name).ToArray();
+
+    private static readonly string[] AdminPermissions =
+    [
+        PermissionNames.RolesView,
+        PermissionNames.UsersView,
+        PermissionNames.UsersCreate,
+        PermissionNames.UsersUpdate,
+        PermissionNames.UsersDelete,
+        PermissionNames.MenusView,
+        PermissionNames.MenusCreate,
+        PermissionNames.MenusUpdate,
+        PermissionNames.MenusDelete,
+        PermissionNames.CategoriesView,
+        PermissionNames.CategoriesCreate,
+        PermissionNames.CategoriesUpdate,
+        PermissionNames.CategoriesDelete,
+        PermissionNames.MenuItemsView,
+        PermissionNames.MenuItemsCreate,
+        PermissionNames.MenuItemsUpdate,
+        PermissionNames.MenuItemsDelete,
+        PermissionNames.ItemOptionsView,
+        PermissionNames.ItemOptionsCreate,
+        PermissionNames.ItemOptionsUpdate,
+        PermissionNames.ItemOptionsDelete,
+        PermissionNames.OptionValuesView,
+        PermissionNames.OptionValuesCreate,
+        PermissionNames.OptionValuesUpdate,
+        PermissionNames.OptionValuesDelete,
+        PermissionNames.SessionsView,
+        PermissionNames.SessionsCreate,
+        PermissionNames.SessionsUpdate,
+        PermissionNames.SessionsDelete
+    ];
+
+    private static readonly string[] ManagerPermissions =
+    [
+        PermissionNames.MenusView,
+        PermissionNames.CategoriesView,
+        PermissionNames.MenuItemsView,
+        PermissionNames.MenuItemsCreate,
+        PermissionNames.MenuItemsUpdate,
+        PermissionNames.MenuItemsDelete,
+        PermissionNames.ItemOptionsView,
+        PermissionNames.ItemOptionsCreate,
+        PermissionNames.ItemOptionsUpdate,
+        PermissionNames.ItemOptionsDelete,
+        PermissionNames.OptionValuesView,
+        PermissionNames.OptionValuesCreate,
+        PermissionNames.OptionValuesUpdate,
+        PermissionNames.OptionValuesDelete
+    ];
 
     public static async Task SeedAsync(AppDbContext context, CancellationToken ct = default)
     {
@@ -71,7 +129,7 @@ public static class DbSeeder
         var rolesByName = await context.Roles
             .ToDictionaryAsync(x => x.Name, StringComparer.OrdinalIgnoreCase, ct);
 
-        foreach (var roleName in new[] { "SuperAdmin", "Admin", "Manager", "User" })
+        foreach (var roleName in new[] { RoleNames.SuperAdmin, RoleNames.Admin, RoleNames.Manager, RoleNames.User })
         {
             if (!rolesByName.ContainsKey(roleName))
             {
@@ -86,25 +144,18 @@ public static class DbSeeder
             await context.SaveChangesAsync(ct);
         }
 
-        var superAdminRole = rolesByName["SuperAdmin"];
+        var superAdminRole = rolesByName[RoleNames.SuperAdmin];
+        var adminRole = rolesByName[RoleNames.Admin];
+        var managerRole = rolesByName[RoleNames.Manager];
+        var userRole = rolesByName[RoleNames.User];
 
-        var existingSuperAdminPermissionIds = await context.RolePermissions
-            .Where(x => x.RoleId == superAdminRole.Id)
-            .Select(x => x.PermissionId)
-            .ToListAsync(ct);
+        await EnsureRolePermissionsAsync(context, superAdminRole, SuperAdminPermissions, existingPermissions, ct);
+        await EnsureRolePermissionsAsync(context, adminRole, AdminPermissions, existingPermissions, ct);
+        await EnsureRolePermissionsAsync(context, managerRole, ManagerPermissions, existingPermissions, ct);
+        await EnsureRolePermissionsAsync(context, userRole, Array.Empty<string>(), existingPermissions, ct);
 
-        var missingSuperAdminRolePermissions = existingPermissions.Values
-            .Where(permission => !existingSuperAdminPermissionIds.Contains(permission.Id))
-            .Select(permission => new RolePermission
-            {
-                RoleId = superAdminRole.Id,
-                PermissionId = permission.Id
-            })
-            .ToList();
-
-        if (missingSuperAdminRolePermissions.Count > 0)
+        if (context.ChangeTracker.HasChanges())
         {
-            await context.RolePermissions.AddRangeAsync(missingSuperAdminRolePermissions, ct);
             await context.SaveChangesAsync(ct);
         }
 
@@ -188,5 +239,39 @@ public static class DbSeeder
         }, ct);
 
         await context.SaveChangesAsync(ct);
+    }
+
+    private static async Task EnsureRolePermissionsAsync(
+        AppDbContext context,
+        Role role,
+        IReadOnlyCollection<string> permissionNames,
+        IReadOnlyDictionary<string, Permission> permissionsByName,
+        CancellationToken ct)
+    {
+        if (permissionNames.Count == 0)
+        {
+            return;
+        }
+
+        var existingPermissionIds = await context.RolePermissions
+            .Where(x => x.RoleId == role.Id)
+            .Select(x => x.PermissionId)
+            .ToListAsync(ct);
+
+        var missingRolePermissions = permissionNames
+            .Where(permissionsByName.ContainsKey)
+            .Select(name => permissionsByName[name])
+            .Where(permission => !existingPermissionIds.Contains(permission.Id))
+            .Select(permission => new RolePermission
+            {
+                RoleId = role.Id,
+                PermissionId = permission.Id
+            })
+            .ToList();
+
+        if (missingRolePermissions.Count > 0)
+        {
+            await context.RolePermissions.AddRangeAsync(missingRolePermissions, ct);
+        }
     }
 }

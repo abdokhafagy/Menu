@@ -1,14 +1,16 @@
 @page "/option-values"
 @attribute [Authorize]
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+@using Menu.UI.Components
 
 <PageTitle>@L["OptionValues.PageTitle"]</PageTitle>
 
 <PageHeader Title="@L["OptionValues.PageTitle"]" SubTitle="@L["OptionValues.SubTitle"]">
     <Actions>
-        <AuthorizeView Roles="superadmin" Context="authState">
+        <PermissionView Permission="@AppPermissions.OptionValuesCreate">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["OptionValues.Add"]</MudButton>
-        </AuthorizeView>
+        </PermissionView>
     </Actions>
 </PageHeader>
 
@@ -19,23 +21,27 @@
             <MudTh>@L["OptionValues.PriceDelta"]</MudTh>
             <MudTh>@L["OptionValues.Default"]</MudTh>
             <MudTh>@L["OptionValues.Option"]</MudTh>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.OptionValuesUpdate">
                 <MudTh>@L["Common.Actions"]</MudTh>
-            </AuthorizeView>
+            </PermissionView>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Value</MudTd>
             <MudTd>@context.PriceModifier</MudTd>
             <MudTd>@(context.IsDefault ? L["Common.Yes"] : L["Common.No"])</MudTd>
             <MudTd>@(context.ItemOptionName ?? "-")</MudTd>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.OptionValuesUpdate">
                 <MudTd>
                     <MudStack Row="true" Spacing="1" Class="entity-actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        <PermissionView Permission="@AppPermissions.OptionValuesUpdate">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
+                        </PermissionView>
+                        <PermissionView Permission="@AppPermissions.OptionValuesDelete">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        </PermissionView>
                     </MudStack>
                 </MudTd>
-            </AuthorizeView>
+            </PermissionView>
         </RowTemplate>
         <PagerContent>
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
@@ -51,12 +57,16 @@
                     <MudText Typo="Typo.body2">@L["OptionValues.PriceDelta"]: @optionValue.PriceModifier</MudText>
                     <MudText Typo="Typo.body2">@L["OptionValues.Default"]: @(optionValue.IsDefault ? L["Common.Yes"] : L["Common.No"])</MudText>
                     <MudText Typo="Typo.body2">@(optionValue.ItemOptionName ?? "-")</MudText>
-                    <AuthorizeView Roles="superadmin" Context="authState">
+                    <PermissionView Permission="@AppPermissions.OptionValuesUpdate">
                         <MudStack Row="true" Spacing="1" Class="entity-actions">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(optionValue)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(optionValue)" />
+                            <PermissionView Permission="@AppPermissions.OptionValuesUpdate">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(optionValue)" />
+                            </PermissionView>
+                            <PermissionView Permission="@AppPermissions.OptionValuesDelete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(optionValue)" />
+                            </PermissionView>
                         </MudStack>
-                    </AuthorizeView>
+                    </PermissionView>
                 </MudStack>
             </MudPaper>
         }

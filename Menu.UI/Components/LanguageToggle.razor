@@ -1,4 +1,6 @@
-<MudButtonGroup Variant="Variant.Outlined" Color="Color.Secondary" Class="app-language-toggle">
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
+<MudButtonGroup Variant="Variant.Outlined" Color="Color.Secondary" Class="app-language-toggle" aria-label="@L["Language.Toggle"]">
     <MudButton Variant='@(AppState.Culture == "en" ? Variant.Filled : Variant.Outlined)' OnClick='@(() => SetLanguageAsync("en"))'>EN</MudButton>
     <MudButton Variant='@(AppState.Culture == "ar" ? Variant.Filled : Variant.Outlined)' OnClick='@(() => SetLanguageAsync("ar"))'>AR</MudButton>
 </MudButtonGroup>

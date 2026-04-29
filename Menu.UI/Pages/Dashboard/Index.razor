@@ -1,14 +1,18 @@
 @page "/"
 @attribute [Authorize]
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>@L["Dashboard.PageTitle"]</PageTitle>
 
 <PageHeader Title="@L["Dashboard.PageTitle"]" SubTitle="@L["Dashboard.SubTitle"]" />
 
 <MudGrid>
-    <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Restaurants"]" Value="@_restaurants.ToString()" Icon="@Icons.Material.Filled.Store" /></MudItem>
-    <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Users"]" Value="@_users.ToString()" Icon="@Icons.Material.Filled.People" Color="Color.Secondary" /></MudItem>
+    @if (_isSuperAdmin)
+    {
+        <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Restaurants"]" Value="@_restaurants.ToString()" Icon="@Icons.Material.Filled.Store" /></MudItem>
+        <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Users"]" Value="@_users.ToString()" Icon="@Icons.Material.Filled.People" Color="Color.Secondary" /></MudItem>
+    }
     <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Menus"]" Value="@_menus.ToString()" Icon="@Icons.Material.Filled.MenuBook" Color="Color.Info" /></MudItem>
     <MudItem xs="12" sm="6" md="3"><StatCard Title="@L["Dashboard.Items"]" Value="@_items.ToString()" Icon="@Icons.Material.Filled.Fastfood" Color="Color.Success" /></MudItem>
 </MudGrid>
@@ -26,6 +30,7 @@
     [Inject] private MenuItemService MenuItemService { get; set; } = default!;
 
     private bool _loading = true;
+    private bool _isSuperAdmin = false;
     private int _restaurants;
     private int _users;
     private int _menus;
@@ -35,11 +40,53 @@
     {
         try
         {
+            // Determine if the user is SuperAdmin
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            _isSuperAdmin = user.IsInRole("superadmin") || user.IsInRole("SuperAdmin");
+
             var q = new QueryParameters { PageNumber = 1, PageSize = 10 };
-            _restaurants = (await RestaurantService.GetAllAsync(q))?.TotalCount ?? 0;
-            _users = (await UserService.GetAllAsync(q))?.TotalCount ?? 0;
-            _menus = (await MenuService.GetAllAsync(q))?.TotalCount ?? 0;
-            _items = (await MenuItemService.GetAllAsync(q))?.TotalCount ?? 0;
+            
+            // Only load restaurants and users if user is SuperAdmin
+            if (_isSuperAdmin)
+            {
+                try
+                {
+                    _restaurants = (await RestaurantService.GetAllAsync(q))?.TotalCount ?? 0;
+                }
+                catch (ApiServiceException ex) when (ex.StatusCode == 403)
+                {
+                    _restaurants = 0;
+                }
+
+                try
+                {
+                    _users = (await UserService.GetAllAsync(q))?.TotalCount ?? 0;
+                }
+                catch (ApiServiceException ex) when (ex.StatusCode == 403)
+                {
+                    _users = 0;
+                }
+            }
+
+            // Load menus and items (available to all roles)
+            try
+            {
+                _menus = (await MenuService.GetAllAsync(q))?.TotalCount ?? 0;
+            }
+            catch (ApiServiceException ex) when (ex.StatusCode == 403)
+            {
+                _menus = 0;
+            }
+
+            try
+            {
+                _items = (await MenuItemService.GetAllAsync(q))?.TotalCount ?? 0;
+            }
+            catch (ApiServiceException ex) when (ex.StatusCode == 403)
+            {
+                _items = 0;
+            }
         }
         finally
         {

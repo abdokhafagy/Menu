@@ -174,28 +174,5 @@ Use Swagger for full request/response contracts.
 - API serves static files from Menu.Api/wwwroot.
 - Uploaded images are handled by FilesController.
 
-## Deployment Notes
 
-- Ensure production appsettings values are environment-specific.
-- Do not keep production connection strings or JWT secrets in committed files.
-- Enable HTTPS and secure CORS policy for production clients.
 
-## Git Ignore
-
-The repository includes a .gitignore configured for:
-- build outputs (bin, obj)
-- IDE files (.vs, .idea, .vscode)
-- logs, test outputs, and local environment files
-
-## Repository Setup
-
-If creating a fresh remote setup:
-
-```bash
-git init
-git add .
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/abdokhafagy/Menu.git
-git push -u origin main
-```

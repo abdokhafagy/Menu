@@ -8,7 +8,8 @@ public record UserDto(
     bool IsActive,
     Guid RestaurantId,
     DateTime CreatedAt,
-    string? RestaurantName = null);
+    string? RestaurantName = null,
+    IReadOnlyList<string>? Roles = null);
 
 public record CreateUserRequest(
     string Username,
@@ -24,3 +25,5 @@ public record UpdateUserRequest(
     string? FullName,
     bool IsActive,
     Guid RestaurantId);
+
+public record AssignRolesRequest(List<Guid> RoleIds);

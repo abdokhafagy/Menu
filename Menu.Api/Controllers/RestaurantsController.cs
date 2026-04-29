@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Menu.Api.Filters;
 using Menu.Application.Common.Models;
 using Menu.Application.DTOs.Restaurant;
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 
 namespace Menu.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = RoleNames.SuperAdmin)]
 public class RestaurantsController : ControllerBase
 {
     private readonly IRestaurantService _service;
@@ -21,6 +21,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = PermissionNames.RestaurantsView)]
     public async Task<ActionResult<ApiResponse<PaginatedResult<RestaurantDto>>>> GetAll([FromQuery] QueryParameters query, CancellationToken ct)
     {
         var result = await _service.GetAllAsync(query, ct);
@@ -28,6 +29,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = PermissionNames.RestaurantsView)]
     public async Task<ActionResult<ApiResponse<RestaurantDto>>> GetById(Guid id, CancellationToken ct)
     {
         var result = await _service.GetByIdAsync(id, ct);
@@ -35,7 +37,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpPost]
-    [RequirePermission("restaurants.create")]
+    [Authorize(Policy = PermissionNames.RestaurantsCreate)]
     public async Task<ActionResult<ApiResponse<RestaurantDto>>> Create([FromBody] CreateRestaurantDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -43,7 +45,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [RequirePermission("restaurants.update")]
+    [Authorize(Policy = PermissionNames.RestaurantsUpdate)]
     public async Task<ActionResult<ApiResponse<RestaurantDto>>> Update(Guid id, [FromBody] UpdateRestaurantDto dto, CancellationToken ct)
     {
         var result = await _service.UpdateAsync(id, dto, ct);
@@ -51,7 +53,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [RequirePermission("restaurants.delete")]
+    [Authorize(Policy = PermissionNames.RestaurantsDelete)]
     public async Task<ActionResult<ApiResponse<string>>> Delete(Guid id, CancellationToken ct)
     {
         await _service.DeleteAsync(id, ct);

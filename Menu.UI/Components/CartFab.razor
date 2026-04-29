@@ -1,0 +1,47 @@
+@implements IDisposable
+
+<div class="cart-fab-container">
+    @if (CartState.TotalItems > 0)
+    {
+        <MudBadge Content="CartState.TotalItems"
+                  Color="Color.Primary"
+                  Class="cart-fab__badge"
+                  Overlap="true"
+                  Bordered="true">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="OnClick"
+                       Class="cart-fab__btn"
+                       aria-label="@($"Cart with {CartState.TotalItems} items")">
+                <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" />
+            </MudButton>
+        </MudBadge>
+    }
+    else
+    {
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Default"
+                   OnClick="OnClick"
+                   Class="cart-fab__btn"
+                   aria-label="Open cart">
+            <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" />
+        </MudButton>
+    }
+</div>
+
+@code {
+    [Inject] private State.CartState CartState { get; set; } = default!;
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CartState.OnChange += HandleCartChanged;
+    }
+
+    private void HandleCartChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        CartState.OnChange -= HandleCartChanged;
+    }
+}

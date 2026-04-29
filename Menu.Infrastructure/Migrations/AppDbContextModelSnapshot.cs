@@ -62,6 +62,8 @@ namespace Menu.Infrastructure.Migrations
 
                     b.HasIndex("MenuId");
 
+                    b.HasIndex("MenuId", "DisplayOrder");
+
                     b.ToTable("Categories");
                 });
 
@@ -100,6 +102,8 @@ namespace Menu.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MenuItemId");
+
+                    b.HasIndex("MenuItemId", "DisplayOrder");
 
                     b.ToTable("ItemImages");
                 });
@@ -153,6 +157,8 @@ namespace Menu.Infrastructure.Migrations
 
                     b.HasIndex("MenuItemId");
 
+                    b.HasIndex("MenuItemId", "Name");
+
                     b.ToTable("ItemOptions");
                 });
 
@@ -191,6 +197,8 @@ namespace Menu.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RestaurantId");
+
+                    b.HasIndex("RestaurantId", "IsActive", "Name");
 
                     b.ToTable("Menus");
                 });
@@ -253,6 +261,8 @@ namespace Menu.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("CategoryId", "IsAvailable", "DisplayOrder");
+
                     b.ToTable("MenuItems");
                 });
 
@@ -301,6 +311,8 @@ namespace Menu.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ItemOptionId");
+
+                    b.HasIndex("ItemOptionId", "DisplayOrder");
 
                     b.ToTable("OptionValues");
                 });

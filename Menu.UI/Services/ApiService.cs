@@ -86,7 +86,7 @@ public sealed class ApiService : IApiService
         var body = await response.Content.ReadAsStringAsync(ct);
         if (string.IsNullOrWhiteSpace(body))
         {
-            response.EnsureSuccessStatusCode();
+            throw new ApiServiceException((int)response.StatusCode, $"HTTP {response.StatusCode}");
         }
 
         try
@@ -95,7 +95,7 @@ public sealed class ApiService : IApiService
             var message = error?.Message;
             if (!string.IsNullOrWhiteSpace(message))
             {
-                throw new InvalidOperationException(message);
+                throw new ApiServiceException((int)response.StatusCode, message, body);
             }
         }
         catch (JsonException)
@@ -103,7 +103,7 @@ public sealed class ApiService : IApiService
             // Ignore payload parse errors and throw status code error below.
         }
 
-        response.EnsureSuccessStatusCode();
+        throw new ApiServiceException((int)response.StatusCode, $"HTTP {response.StatusCode}", body);
     }
 
     private static string AddQueryString(string url, QueryParameters? query)

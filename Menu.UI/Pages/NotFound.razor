@@ -1,4 +1,5 @@
 @page "/404"
+@layout AuthLayout
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
 <PageTitle>@L["NotFound.PageTitle"]</PageTitle>
@@ -6,5 +7,5 @@
 <MudPaper Class="panel pa-6 text-center">
     <MudText Typo="Typo.h4">@L["NotFound.Title"]</MudText>
     <MudText Typo="Typo.body1" Class="mb-4">@L["NotFound.Message"]</MudText>
-    <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">@L["NotFound.GoDashboard"]</MudButton>
+    @* <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">@L["NotFound.GoDashboard"]</MudButton> *@
 </MudPaper>

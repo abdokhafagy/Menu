@@ -1,8 +1,10 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
 <MudSwitch T="bool"
            Color="Color.Secondary"
            Value="AppState.IsDarkMode"
            ValueChanged="OnThemeChanged"
-           Label="Dark" />
+           Label="@L["Theme.Dark"]" />
 
 @code {
     [Inject] private State.AppState AppState { get; set; } = default!;

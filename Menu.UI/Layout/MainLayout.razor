@@ -1,39 +1,64 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @implements IDisposable
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
 <MudLayout Class="app-shell">
     <MudAppBar Elevation="0" Dense="true" Class="app-navbar">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" Class="app-navbar__menu-btn" OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6" Class="app-navbar__brand">Menu Management</MudText>
+        <MudHidden Breakpoint="Breakpoint.MdAndDown">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" Class="app-navbar__menu-btn" OnClick="ToggleDrawer" />
+        </MudHidden>
+        <MudText Typo="Typo.h6" Class="app-navbar__brand mud-text-truncate">@L["App.Title"]</MudText>
         <MudSpacer />
-        <div class="app-navbar__actions">
-            <ThemeToggle />
-            <LanguageToggle />
-            <MudButton StartIcon="@Icons.Material.Filled.Logout" Color="Color.Secondary" Variant="Variant.Text" Class="app-navbar__logout" OnClick="LogoutAsync">
-                Logout
-            </MudButton>
-        </div>
+
+        <MudHidden Breakpoint="Breakpoint.MdAndDown">
+            <div class="app-navbar__actions">
+                <ThemeToggle />
+                <LanguageToggle />
+                <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Secondary" Class="app-navbar__user-menu">
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="LogoutAsync">@L["Common.Logout"]</MudMenuItem>
+                </MudMenu>
+            </div>
+        </MudHidden>
+
+        <MudHidden Breakpoint="Breakpoint.LgAndUp">
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Secondary" Class="app-navbar__overflow-menu">
+                <MudMenuItem>
+                    <ThemeToggle />
+                </MudMenuItem>
+                <MudMenuItem>
+                    <LanguageToggle />
+                </MudMenuItem>
+                <MudDivider />
+                <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="LogoutAsync">@L["Common.Logout"]</MudMenuItem>
+            </MudMenu>
+        </MudHidden>
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_drawerOpen"
-               ClipMode="DrawerClipMode.Never"
-               Variant="DrawerVariant.Responsive"
-               Breakpoint="Breakpoint.Md"
-               Anchor="@(AppState.IsRtl ? Anchor.End : Anchor.Start)"
-               Elevation="0"
-               Class="app-drawer">
-        <NavMenu />
-    </MudDrawer>
+    <MudHidden Breakpoint="Breakpoint.MdAndDown">
+        <MudDrawer @bind-Open="_drawerOpen"
+                   ClipMode="DrawerClipMode.Never"
+                   Variant="DrawerVariant.Responsive"
+                   Breakpoint="Breakpoint.Md"
+                   Anchor="@(AppState.IsRtl ? Anchor.End : Anchor.Start)"
+                   Elevation="0"
+                   Class="app-drawer">
+            <NavMenu />
+        </MudDrawer>
+    </MudHidden>
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.False" Class="content-wrap">
             @Body
         </MudContainer>
     </MudMainContent>
+
+    <MudHidden Breakpoint="Breakpoint.LgAndUp">
+        <BottomNav />
+    </MudHidden>
 </MudLayout>
 
 @code {
-    private bool _drawerOpen = true;
+    private bool _drawerOpen;
 
     [Inject] private Services.AuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
@@ -55,15 +80,13 @@
         try
         {
             var isMobile = await JSRuntime.InvokeAsync<bool>("menuUi.isMobileViewport");
-            if (isMobile)
-            {
-                _drawerOpen = false;
-                StateHasChanged();
-            }
+            _drawerOpen = !isMobile;
+            StateHasChanged();
         }
         catch
         {
-            // Ignore viewport detection failures; desktop behavior remains intact.
+            _drawerOpen = true;
+            StateHasChanged();
         }
     }
 

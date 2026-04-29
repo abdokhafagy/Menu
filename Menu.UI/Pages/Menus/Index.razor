@@ -1,14 +1,16 @@
 @page "/menus"
 @attribute [Authorize]
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+@using Menu.UI.Components
 
 <PageTitle>@L["Menus.PageTitle"]</PageTitle>
 
 <PageHeader Title="@L["Menus.PageTitle"]" SubTitle="@L["Menus.SubTitle"]">
     <Actions>
-        <AuthorizeView Roles="superadmin" Context="authState">
+        <PermissionView Permission="@AppPermissions.MenusCreate">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["Menus.Add"]</MudButton>
-        </AuthorizeView>
+        </PermissionView>
     </Actions>
 </PageHeader>
 
@@ -18,22 +20,26 @@
             <MudTh>@L["Menus.Name"]</MudTh>
             <MudTh>@L["Menus.Restaurant"]</MudTh>
             <MudTh>@L["Menus.Status"]</MudTh>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.MenusUpdate">
                 <MudTh>@L["Common.Actions"]</MudTh>
-            </AuthorizeView>
+            </PermissionView>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Name</MudTd>
             <MudTd>@(context.RestaurantName ?? "-")</MudTd>
             <MudTd><MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? L["Common.Active"] : L["Common.Inactive"])</MudChip></MudTd>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.MenusUpdate">
                 <MudTd>
                     <MudStack Row="true" Spacing="1" Class="entity-actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        <PermissionView Permission="@AppPermissions.MenusUpdate">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
+                        </PermissionView>
+                        <PermissionView Permission="@AppPermissions.MenusDelete">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        </PermissionView>
                     </MudStack>
                 </MudTd>
-            </AuthorizeView>
+            </PermissionView>
         </RowTemplate>
         <PagerContent>
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
@@ -48,12 +54,16 @@
                     <MudText Typo="Typo.subtitle1">@menu.Name</MudText>
                     <MudText Typo="Typo.body2">@(menu.RestaurantName ?? "-")</MudText>
                     <MudChip T="string" Color="@(menu.IsActive ? Color.Success : Color.Error)">@(menu.IsActive ? L["Common.Active"] : L["Common.Inactive"])</MudChip>
-                    <AuthorizeView Roles="superadmin" Context="authState">
+                    <PermissionView Permission="@AppPermissions.MenusUpdate">
                         <MudStack Row="true" Spacing="1" Class="entity-actions">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(menu)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(menu)" />
+                            <PermissionView Permission="@AppPermissions.MenusUpdate">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(menu)" />
+                            </PermissionView>
+                            <PermissionView Permission="@AppPermissions.MenusDelete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(menu)" />
+                            </PermissionView>
                         </MudStack>
-                    </AuthorizeView>
+                    </PermissionView>
                 </MudStack>
             </MudPaper>
         }

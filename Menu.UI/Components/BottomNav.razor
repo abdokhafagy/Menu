@@ -1,0 +1,44 @@
+@namespace Menu.UI.Components
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@inject Menu.UI.State.UserContextService UserContext
+@implements IDisposable
+
+@{
+    var items = NavigationFilter.VisibleForMobile(UserContext, max: MaxItems);
+}
+
+@if (items.Count > 0)
+{
+    <MudPaper Class="app-bottom-bar" Elevation="6">
+        <MudNavMenu Class="app-bottom-bar__nav">
+            @foreach (var item in items)
+            {
+                <MudNavLink Href="@item.Route"
+                            Match="@item.Match"
+                            Icon="@item.Icon">
+                    @L[item.TitleKey]
+                </MudNavLink>
+            }
+        </MudNavMenu>
+    </MudPaper>
+}
+
+@code {
+    /// <summary>Maximum number of bottom-nav items to render. Mobile UX caps at 5.</summary>
+    [Parameter] public int MaxItems { get; set; } = 5;
+
+    protected override void OnInitialized()
+    {
+        UserContext.OnContextChanged += HandleContextChanged;
+    }
+
+    private void HandleContextChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UserContext.OnContextChanged -= HandleContextChanged;
+    }
+}

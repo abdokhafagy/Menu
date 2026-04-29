@@ -10,6 +10,7 @@ public class MenuConfiguration : IEntityTypeConfiguration<Menu.Domain.Entities.M
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        builder.HasIndex(x => new { x.RestaurantId, x.IsActive, x.Name });
 
         builder.HasMany(x => x.Categories)
             .WithOne(x => x.Menu)

@@ -7,14 +7,19 @@ using Menu.Application.DTOs.Permission;
 using Menu.Application.DTOs.Restaurant;
 using Menu.Application.DTOs.Role;
 using Menu.Application.DTOs.User;
+using System.Security.Claims;
 
 namespace Menu.Application.Interfaces;
 
 public interface IRestaurantService : ICrudService<RestaurantDto, CreateRestaurantDto, UpdateRestaurantDto>;
-public interface IUserService : ICrudService<UserDto, CreateUserDto, UpdateUserDto>;
+public interface IUserService : ICrudService<UserDto, CreateUserDto, UpdateUserDto>
+{
+    Task AssignRolesAsync(Guid userId, IReadOnlyList<Guid> roleIds, ClaimsPrincipal principal, CancellationToken ct = default);
+}
 public interface IRoleService : ICrudService<RoleDto, CreateRoleDto, UpdateRoleDto>
 {
     Task AssignPermissionsAsync(Guid roleId, IReadOnlyList<Guid> permissionIds, CancellationToken ct = default);
+    Task<IReadOnlyList<PermissionDto>> GetPermissionsAsync(Guid roleId, CancellationToken ct = default);
 }
 
 public interface IPermissionService : ICrudService<PermissionDto, CreatePermissionDto, UpdatePermissionDto>;

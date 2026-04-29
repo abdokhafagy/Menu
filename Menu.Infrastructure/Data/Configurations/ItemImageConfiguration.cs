@@ -10,6 +10,7 @@ public class ItemImageConfiguration : IEntityTypeConfiguration<ItemImage>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.ImageUrl).HasMaxLength(500).IsRequired();
+        builder.HasIndex(x => new { x.MenuItemId, x.DisplayOrder });
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

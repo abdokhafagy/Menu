@@ -11,6 +11,7 @@ public class ItemOptionConfiguration : IEntityTypeConfiguration<ItemOption>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
         builder.Property(x => x.SelectionType).HasConversion<int>();
+        builder.HasIndex(x => new { x.MenuItemId, x.Name });
 
         builder.HasMany(x => x.Values)
             .WithOne(x => x.ItemOption)

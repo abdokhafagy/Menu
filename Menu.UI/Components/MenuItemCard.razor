@@ -1,107 +1,145 @@
-<MudCard Class="public-menu-item-card">
-    <MudCardMedia Image="@GetImageUrl()" Height="180" Class="public-menu-item-media" />
-    <MudCardContent>
-        <MudText Typo="Typo.h6" Class="public-menu-item-title">@Item.Name</MudText>
-        <MudText Typo="Typo.body2" Class="public-menu-item-description">@GetDescription()</MudText>
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@inject Menu.UI.State.AppState AppState
 
-        @if (Item.Options is { Count: > 0 })
-        {
-            <MudDivider Class="my-3" />
-            <MudStack Spacing="1">
-                <MudText Typo="Typo.caption" Class="public-menu-item-options__label">Options</MudText>
+<MudCard Class="menu-item-card"
+         @onclick="HandleCardClick"
+         tabindex="@(Item.IsAvailable && !IsLoading ? 0 : -1)"
+         style="@(GetCursorStyle())"
+         @onkeydown="HandleKeyDown"
+         role="button"
+         aria-busy="@IsLoading"
+         aria-label="@(GetItemName())">
 
-                @foreach (var option in Item.Options.OrderBy(option => option.Name))
-                {
-                    <MudPaper Class="public-menu-item-option pa-2" Elevation="0">
-                        <MudStack Spacing="1">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                <MudText Typo="Typo.body2" Class="public-menu-item-option__title">@option.Name</MudText>
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">@GetOptionRuleLabel(option)</MudChip>
-                            </MudStack>
+    <div class="menu-item-card__image-wrap">
+        <img src="@ImageUrl"
+             alt="@(GetItemName())"
+             class="menu-item-card__image"
+             loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80'" />
 
-                            <MudStack Row="true" Spacing="1" Class="public-menu-item-option__values">
-                                @foreach (var value in option.Values.OrderBy(value => value.DisplayOrder).ThenBy(value => value.Value))
-                                {
-                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Primary">
-                                        @GetValueLabel(value)
-                                    </MudChip>
-                                }
-                            </MudStack>
-                        </MudStack>
-                    </MudPaper>
-                }
-            </MudStack>
-        }
-
-        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mt-3">
-            <MudText Typo="Typo.subtitle1" Class="public-menu-item-price">@Item.Price.ToString("0.00")</MudText>
+        <div class="menu-item-card__badges">
             @if (!Item.IsAvailable)
             {
-                <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Unavailable</MudChip>
+                <span class="badge badge--unavailable">@L["MenuItem.Unavailable"]</span>
             }
-        </MudStack>
+            else if (Item.IsNew)
+            {
+                <span class="badge badge--new">@L["MenuItem.New"]</span>
+            }
+        </div>
+
+        @if (!Item.IsAvailable)
+        {
+            <div class="menu-item-card__unavailable-overlay">
+                <MudText Typo="Typo.body2" Class="menu-item-card__unavailable-text">
+                    @L["MenuItem.CurrentlyUnavailable"]
+                </MudText>
+            </div>
+        }
+    </div>
+
+    <MudCardContent Class="menu-item-card__content pa-4">
+        <div class="menu-item-card__header">
+            <MudText Typo="Typo.subtitle1" Class="menu-item-card__name">
+                @(GetItemName())
+            </MudText>
+            <div class="menu-item-card__price-wrap">
+                <MudText Typo="Typo.h6" Class="menu-item-card__price">
+                    @(GetFormattedPrice())
+                </MudText>
+            </div>
+        </div>
     </MudCardContent>
-    @if (!ReadOnlyMode)
-    {
-        <MudCardActions>
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       FullWidth="true"
-                       Disabled="@(!Item.IsAvailable)"
-                       StartIcon="@Icons.Material.Filled.Tune"
-                       OnClick="() => OnCustomize.InvokeAsync(Item)">
-                @(Item.IsAvailable ? "Customize" : "Not Available")
-            </MudButton>
-        </MudCardActions>
-    }
+
+    <MudCardActions Class="menu-item-card__actions pa-3 pt-0">
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   Disabled="@(!Item.IsAvailable || IsLoading)"
+                   EndIcon="@(IsLoading ? null : Icons.Material.Filled.ChevronRight)"
+                   Class="menu-item-card__cta"
+                   OnClick="HandleViewDetails">
+            @if (IsLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="me-2" />
+                <span>Loading...</span>
+            }
+            else
+            {
+                @(L["MenuItem.Details"])
+            }
+        </MudButton>
+    </MudCardActions>
 </MudCard>
 
 @code {
-    [Parameter, EditorRequired] public PublicMenuItemDto Item { get; set; } = default!;
-    [Parameter] public EventCallback<PublicMenuItemDto> OnCustomize { get; set; }
+    [Parameter, EditorRequired] public PublicMenuItemSummaryDto Item { get; set; } = default!;
+
     [Parameter] public bool ReadOnlyMode { get; set; }
 
-    private string GetImageUrl()
+    [Parameter] public EventCallback<PublicMenuItemSummaryDto> OnItemClick { get; set; }
+
+    [Parameter] public int AnimationDelayMs { get; set; } = 0;
+
+    [Parameter] public bool IsLoading { get; set; }
+
+    private PublicMenuItemSummaryDto? _renderedItem;
+    private bool _renderedReadOnlyMode;
+    private bool _renderedIsLoading;
+    private string? _renderedCulture;
+
+    protected override bool ShouldRender()
     {
-        if (!string.IsNullOrWhiteSpace(Item.ImageUrl))
+        var culture = AppState.Culture;
+        if (ReferenceEquals(_renderedItem, Item)
+            && _renderedReadOnlyMode == ReadOnlyMode
+            && _renderedIsLoading == IsLoading
+            && _renderedCulture == culture)
         {
-            return Item.ImageUrl;
+            return false;
         }
 
-        return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80";
+        _renderedItem = Item;
+        _renderedReadOnlyMode = ReadOnlyMode;
+        _renderedIsLoading = IsLoading;
+        _renderedCulture = culture;
+        return true;
     }
 
-    private string GetDescription()
-    {
-        if (!string.IsNullOrWhiteSpace(Item.Description))
-        {
-            return Item.Description;
-        }
+    private string GetItemName()
+        => AppState.Culture == "ar" && !string.IsNullOrWhiteSpace(Item.NameAr)
+            ? Item.NameAr
+            : Item.Name;
 
-        return "Fresh ingredients prepared to order.";
+    private string GetFormattedPrice() => $"{Item.Price:N2}";
+
+    private string ImageUrl => !string.IsNullOrWhiteSpace(Item.ImageUrl)
+        ? Item.ImageUrl
+        : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80";
+
+    private string GetCursorStyle() => Item.IsAvailable && !IsLoading ? "cursor: pointer" : "cursor: default";
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleCardClick();
+        }
     }
 
-    private static string GetOptionRuleLabel(PublicItemOptionDto option)
+    private async Task HandleCardClick()
     {
-        var isSingle = string.Equals(option.SelectionType, "Single", StringComparison.OrdinalIgnoreCase);
-        if (isSingle)
+        if (!ReadOnlyMode && Item.IsAvailable && !IsLoading)
         {
-            return option.IsRequired ? "Required · 1 choice" : "Optional · 1 choice";
+            await OnItemClick.InvokeAsync(Item);
         }
-
-        var min = Math.Max(0, option.MinSelections);
-        var max = option.MaxSelections <= 0 ? "Any" : option.MaxSelections.ToString();
-        return option.IsRequired ? $"Required · {min}-{max}" : $"Optional · {min}-{max}";
     }
 
-    private static string GetValueLabel(PublicOptionValueDto value)
+    private async Task HandleViewDetails()
     {
-        if (value.PriceModifier == 0)
+        if (!IsLoading)
         {
-            return value.Value;
+            await OnItemClick.InvokeAsync(Item);
         }
-
-        var sign = value.PriceModifier > 0 ? "+" : string.Empty;
-        return $"{value.Value} ({sign}{value.PriceModifier:0.00})";
     }
 }

@@ -1,16 +1,18 @@
 @page "/users"
 @attribute [Authorize]
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+@using Menu.UI.Components
 
 <PageTitle>@L["Users.PageTitle"]</PageTitle>
 
 <PageHeader Title="@L["Users.PageTitle"]" SubTitle="@L["Users.SubTitle"]">
     <Actions>
-        <AuthorizeView Roles="superadmin" Context="authState">
+        <PermissionView Permission="@AppPermissions.UsersCreate">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreateDialogAsync">
                 @L["Users.Add"]
             </MudButton>
-        </AuthorizeView>
+        </PermissionView>
     </Actions>
 </PageHeader>
 
@@ -21,10 +23,11 @@
             <MudTh>@L["Users.Email"]</MudTh>
             <MudTh>@L["Users.FullName"]</MudTh>
             <MudTh>@L["Users.Restaurant"]</MudTh>
+            <MudTh>Roles</MudTh>
             <MudTh>@L["Users.Status"]</MudTh>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.UsersUpdate">
                 <MudTh>@L["Common.Actions"]</MudTh>
-            </AuthorizeView>
+            </PermissionView>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Username</MudTd>
@@ -32,16 +35,35 @@
             <MudTd>@context.FullName</MudTd>
             <MudTd>@(context.RestaurantName ?? "-")</MudTd>
             <MudTd>
+                @if (context.Roles?.Any() == true)
+                {
+                    <MudStack Row="true" Spacing="1">
+                        @foreach(var role in context.Roles)
+                        {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small">@role</MudChip>
+                        }
+                    </MudStack>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">-</MudText>
+                }
+            </MudTd>
+            <MudTd>
                 <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)">@(context.IsActive ? L["Common.Active"] : L["Common.Inactive"])</MudChip>
             </MudTd>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.UsersUpdate">
                 <MudTd>
                     <MudStack Row="true" Spacing="1" Class="entity-actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialogAsync(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        <PermissionView Permission="@AppPermissions.UsersUpdate">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialogAsync(context)" />
+                        </PermissionView>
+                        <PermissionView Permission="@AppPermissions.UsersDelete">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        </PermissionView>
                     </MudStack>
                 </MudTd>
-            </AuthorizeView>
+            </PermissionView>
         </RowTemplate>
         <PagerContent>
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
@@ -57,13 +79,21 @@
                     <MudText Typo="Typo.body2">@user.Username</MudText>
                     <MudText Typo="Typo.body2">@user.Email</MudText>
                     <MudText Typo="Typo.body2">@(user.RestaurantName ?? "-")</MudText>
+                    @if (user.Roles?.Any() == true)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Info">@string.Join(", ", user.Roles)</MudText>
+                    }
                     <MudChip T="string" Color="@(user.IsActive ? Color.Success : Color.Error)">@(user.IsActive ? L["Common.Active"] : L["Common.Inactive"])</MudChip>
-                    <AuthorizeView Roles="superadmin" Context="authState">
+                    <PermissionView Permission="@AppPermissions.UsersUpdate">
                         <MudStack Row="true" Spacing="1" Class="entity-actions">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialogAsync(user)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(user)" />
+                            <PermissionView Permission="@AppPermissions.UsersUpdate">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialogAsync(user)" />
+                            </PermissionView>
+                            <PermissionView Permission="@AppPermissions.UsersDelete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(user)" />
+                            </PermissionView>
                         </MudStack>
-                    </AuthorizeView>
+                    </PermissionView>
                 </MudStack>
             </MudPaper>
         }

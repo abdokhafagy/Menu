@@ -1,0 +1,210 @@
+/* RTL Dialog Support */
+.customize-dialog-rtl {
+    direction: rtl;
+}
+
+.customize-dialog-rtl ::deep .mud-dialog-container {
+    direction: rtl;
+}
+
+.customize-dialog-rtl ::deep .mud-dialog {
+    direction: rtl;
+}
+
+/* Dialog Content RTL */
+.dialog-content-rtl {
+    text-align: right;
+    direction: rtl;
+}
+
+.dialog-content-rtl ::deep .mud-text {
+    text-align: right;
+}
+
+/* Option Header Alignment */
+.option-header {
+    width: 100%;
+}
+
+.option-name {
+    flex: 1;
+    text-align: right;
+}
+
+/* RTL Form Controls - Radio & Checkbox */
+.rtl-form-control {
+    justify-content: flex-end;
+    flex-direction: row-reverse;
+}
+
+.rtl-form-control ::deep .mud-radio {
+    flex-direction: row-reverse;
+    margin-right: 0;
+    margin-left: 8px;
+}
+
+.rtl-form-control ::deep .mud-checkbox {
+    flex-direction: row-reverse;
+    margin-right: 0;
+    margin-left: 8px;
+}
+
+.rtl-form-control ::deep .mud-radio-button-label,
+.rtl-form-control ::deep .mud-checkbox-button-label {
+    text-align: right;
+    margin-right: 0;
+    margin-left: 8px;
+}
+
+/* Option Group Spacing */
+.option-group {
+    margin-top: 12px;
+}
+
+.option-group ::deep .mud-radio-group {
+    gap: 4px;
+}
+
+/* RTL Padding & Margin Adjustments */
+.customize-dialog-rtl ::deep .pa-3 {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+}
+
+.customize-dialog-rtl ::deep .mud-dialog-content {
+    padding: 24px;
+}
+
+.customize-dialog-rtl ::deep .mud-dialog-actions {
+    padding: 16px 24px;
+    justify-content: flex-end;
+    flex-direction: row-reverse;
+}
+
+/* Total Panel RTL */
+.customize-dialog-rtl .public-total-panel {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.customize-dialog-rtl .public-total-panel ::deep .mud-stack-row {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Option Panel RTL */
+.customize-dialog-rtl .public-option-panel {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.customize-dialog-rtl .public-option-panel ::deep .mud-stack {
+    direction: rtl;
+}
+
+/* Chip/Badge RTL */
+.customize-dialog-rtl ::deep .mud-chip {
+    margin-left: 0;
+}
+
+/* Alert RTL */
+.customize-dialog-rtl ::deep .mud-alert {
+    text-align: right;
+    direction: rtl;
+    margin-bottom: 12px;
+}
+
+/* LTR (Default English) Styles */
+.public-total-panel {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.public-option-panel {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.public-menu-muted {
+    color: rgba(0, 0, 0, 0.54);
+    font-size: 0.75rem;
+}
+
+/* Form Control Consistency */
+.rtl-form-control {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Dialog Actions */
+::deep .mud-dialog-actions {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Button Styles */
+::deep .mud-button {
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+::deep .mud-button-filled-primary {
+    font-weight: 500;
+}
+
+/* Text Hierarchy */
+::deep .mud-text {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    ::deep .mud-dialog-content {
+        padding: 16px;
+    }
+
+    ::deep .mud-dialog-actions {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+    }
+
+    .customize-dialog-rtl ::deep .mud-dialog-actions {
+        flex-direction: row;
+    }
+
+    .customize-dialog-rtl ::deep .mud-button {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    .option-header {
+        flex-direction: column;
+    }
+
+    .option-name {
+        margin-bottom: 8px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .public-total-panel {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .public-option-panel {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .public-menu-muted {
+        color: rgba(255, 255, 255, 0.54);
+    }
+}

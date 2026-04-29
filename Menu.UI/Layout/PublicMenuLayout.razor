@@ -1,17 +1,24 @@
-@inherits LayoutComponentBase
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 
-<div class="public-menu-layout">
-    <header class="public-menu-layout__header">
-        <div class="public-menu-layout__brand">
-            <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Size="Size.Medium" />
-            <div>
-                <MudText Typo="Typo.h6">Restaurant Menu</MudText>
-                <MudText Typo="Typo.caption">Guest Read-Only View</MudText>
+<div class="public-layout">
+    <header class="public-layout__header">
+        <div class="public-layout__header-inner">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Size="Size.Medium" Color="Color.Primary" />
+                <MudText Typo="Typo.h6" Class="public-layout__brand">@(L["PublicMenuLayout.Title"])</MudText>
+            </MudStack>
+
+            <div class="public-layout__header-actions">
+                <LanguageToggle />
             </div>
         </div>
     </header>
 
-    <main class="public-menu-layout__main">
-        @Body
+    <main class="public-layout__main">
+        @(Body)
     </main>
 </div>
+
+@code {
+    [Parameter] public RenderFragment Body { get; set; } = default!;
+}

@@ -1,0 +1,328 @@
+@page "/access-control"
+@attribute [Authorize(Roles = "SuperAdmin")]
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+@using Menu.UI.Components
+
+<PageTitle>@L["AccessControl.PageTitle"]</PageTitle>
+
+<PageHeader Title="@L["AccessControl.PageTitle"]" SubTitle="@L["AccessControl.SubTitle"]">
+    <Actions>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="ReloadAsync"
+                   Disabled="_loading">
+            @L["Common.Refresh"]
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SaveAllAsync"
+                   Disabled="_loading || _saving || !HasPendingChanges">
+            @(_saving ? L["Common.Saving"] : L["AccessControl.SaveAll"])
+        </MudButton>
+    </Actions>
+</PageHeader>
+
+@if (_loading)
+{
+    <MudPaper Class="panel pa-4">
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        <MudText Class="mt-3" Typo="Typo.body2" Color="Color.Secondary">@L["Common.Loading"]</MudText>
+    </MudPaper>
+}
+else if (_roles.Count == 0)
+{
+    <MudPaper Class="panel pa-6 d-flex justify-center">
+        <MudText Typo="Typo.body1">@L["AccessControl.NoRoles"]</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="3">
+        @foreach (var role in _roles)
+        {
+            var roleId = role.Id;
+            var assigned = _assigned[roleId];
+            var totalForRole = _allPermissions.Count;
+            var dirty = _dirtyRoles.Contains(roleId);
+
+            <MudPaper Class="panel pa-4" Elevation="0">
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          Justify="Justify.SpaceBetween"
+                          Class="mb-3"
+                          Style="flex-wrap: wrap; gap: 12px;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Shield" Color="@RoleColor(role.Name)" />
+                        <MudText Typo="Typo.h6">@role.Name</MudText>
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="Color.Default"
+                                 Variant="Variant.Outlined">
+                            @($"{assigned.Count}/{totalForRole}")
+                        </MudChip>
+                        @if (dirty)
+                        {
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="Color.Warning"
+                                     Variant="Variant.Filled">
+                                @L["AccessControl.Unsaved"]
+                            </MudChip>
+                        }
+                    </MudStack>
+
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Text"
+                                   Color="Color.Primary"
+                                   OnClick="() => SelectAll(roleId)">
+                            @L["AccessControl.SelectAll"]
+                        </MudButton>
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   OnClick="() => ClearAll(roleId)">
+                            @L["AccessControl.ClearAll"]
+                        </MudButton>
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   Disabled="!dirty || _saving"
+                                   OnClick="() => SaveRoleAsync(roleId)">
+                            @L["AccessControl.SaveRole"]
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+
+                <MudGrid Spacing="2">
+                    @foreach (var module in _permissionsByModule)
+                    {
+                        <MudItem xs="12" md="6" lg="4">
+                            <MudPaper Class="pa-3" Elevation="0" Style="border: 1px solid var(--mud-palette-table-lines); border-radius: 8px;">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                    <MudText Typo="Typo.subtitle2">@(string.IsNullOrEmpty(module.Key) ? L["AccessControl.UncategorizedModule"].ToString() : module.Key)</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @($"{module.Value.Count(p => assigned.Contains(p.Id))}/{module.Value.Count}")
+                                    </MudText>
+                                </MudStack>
+                                <MudStack Spacing="1">
+                                    @foreach (var permission in module.Value)
+                                    {
+                                        var permId = permission.Id;
+                                        var isOn = assigned.Contains(permId);
+                                        <MudSwitch T="bool"
+                                                   Value="isOn"
+                                                   Color="Color.Primary"
+                                                   Label="@permission.Name"
+                                                   ValueChanged="@(v => TogglePermission(roleId, permId, v))" />
+                                        @if (!string.IsNullOrWhiteSpace(permission.Description))
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ms-8">@permission.Description</MudText>
+                                        }
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        }
+    </MudStack>
+}
+
+@code {
+    [Inject] private RoleService Roles { get; set; } = default!;
+    [Inject] private PermissionService Permissions { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private UserContextService UserContext { get; set; } = default!;
+
+    private bool _loading = true;
+    private bool _saving;
+    private List<RoleDto> _roles = new();
+    private List<PermissionDto> _allPermissions = new();
+    private Dictionary<string, List<PermissionDto>> _permissionsByModule = new();
+    private readonly Dictionary<Guid, HashSet<Guid>> _assigned = new();
+    private readonly Dictionary<Guid, HashSet<Guid>> _initialAssigned = new();
+    private readonly HashSet<Guid> _dirtyRoles = new();
+
+    private bool HasPendingChanges => _dirtyRoles.Count > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _dirtyRoles.Clear();
+        _assigned.Clear();
+        _initialAssigned.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var rolesPage = await Roles.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 100 });
+            _roles = rolesPage?.Data.ToList() ?? new List<RoleDto>();
+
+            var permsPage = await Permissions.GetAllAsync(new QueryParameters { PageNumber = 1, PageSize = 500 });
+            _allPermissions = permsPage?.Data.OrderBy(p => p.Module).ThenBy(p => p.Name).ToList() ?? new List<PermissionDto>();
+
+            _permissionsByModule = _allPermissions
+                .GroupBy(p => p.Module ?? string.Empty)
+                .OrderBy(g => g.Key)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var role in _roles)
+            {
+                var assignedList = await Roles.GetPermissionsAsync(role.Id);
+                var set = new HashSet<Guid>(assignedList.Select(p => p.Id));
+                _assigned[role.Id] = set;
+                _initialAssigned[role.Id] = new HashSet<Guid>(set);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(L["AccessControl.LoadError"], ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void TogglePermission(Guid roleId, Guid permissionId, bool isOn)
+    {
+        if (!_assigned.TryGetValue(roleId, out var set))
+            return;
+
+        if (isOn) set.Add(permissionId);
+        else set.Remove(permissionId);
+
+        UpdateDirty(roleId);
+    }
+
+    private void SelectAll(Guid roleId)
+    {
+        if (!_assigned.TryGetValue(roleId, out var set))
+            return;
+
+        set.Clear();
+        foreach (var p in _allPermissions) set.Add(p.Id);
+        UpdateDirty(roleId);
+    }
+
+    private void ClearAll(Guid roleId)
+    {
+        if (!_assigned.TryGetValue(roleId, out var set))
+            return;
+
+        set.Clear();
+        UpdateDirty(roleId);
+    }
+
+    private void UpdateDirty(Guid roleId)
+    {
+        if (_assigned.TryGetValue(roleId, out var current) &&
+            _initialAssigned.TryGetValue(roleId, out var initial) &&
+            current.SetEquals(initial))
+        {
+            _dirtyRoles.Remove(roleId);
+        }
+        else
+        {
+            _dirtyRoles.Add(roleId);
+        }
+    }
+
+    private async Task SaveRoleAsync(Guid roleId)
+    {
+        if (!_assigned.TryGetValue(roleId, out var set))
+            return;
+
+        _saving = true;
+        try
+        {
+            await Roles.AssignPermissionsAsync(roleId, new AssignPermissionsRequest(set.ToList()));
+            _initialAssigned[roleId] = new HashSet<Guid>(set);
+            _dirtyRoles.Remove(roleId);
+            Snackbar.Add(L["AccessControl.SaveSuccess"], Severity.Success);
+            NotifyIfSelfRole(roleId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(L["AccessControl.SaveError"], ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAllAsync()
+    {
+        if (_dirtyRoles.Count == 0) return;
+
+        _saving = true;
+        var failures = new List<string>();
+        try
+        {
+            foreach (var roleId in _dirtyRoles.ToList())
+            {
+                try
+                {
+                    var set = _assigned[roleId];
+                    await Roles.AssignPermissionsAsync(roleId, new AssignPermissionsRequest(set.ToList()));
+                    _initialAssigned[roleId] = new HashSet<Guid>(set);
+                    _dirtyRoles.Remove(roleId);
+                    NotifyIfSelfRole(roleId);
+                }
+                catch (Exception ex)
+                {
+                    var name = _roles.FirstOrDefault(r => r.Id == roleId)?.Name ?? roleId.ToString();
+                    failures.Add($"{name}: {ex.Message}");
+                }
+            }
+
+            if (failures.Count == 0)
+            {
+                Snackbar.Add(L["AccessControl.SaveAllSuccess"], Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(string.Join(" | ", failures), Severity.Error);
+            }
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NotifyIfSelfRole(Guid roleId)
+    {
+        var roleName = _roles.FirstOrDefault(r => r.Id == roleId)?.Name;
+        if (string.IsNullOrEmpty(roleName)) return;
+
+        if (UserContext.HasRole(roleName))
+        {
+            Snackbar.Add(L["AccessControl.SelfRoleNotice"], Severity.Info);
+        }
+    }
+
+    private static Color RoleColor(string roleName) => roleName?.ToLowerInvariant() switch
+    {
+        "superadmin" => Color.Error,
+        "admin" => Color.Primary,
+        "manager" => Color.Info,
+        "user" => Color.Success,
+        _ => Color.Default
+    };
+}

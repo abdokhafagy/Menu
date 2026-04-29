@@ -17,7 +17,7 @@
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
         <NotFound>
-            <LayoutView Layout="@typeof(MainLayout)">
+            <LayoutView Layout="@typeof(AuthLayout)">
                 <Menu.UI.Pages.NotFound />
             </LayoutView>
         </NotFound>
@@ -28,6 +28,8 @@
     [Inject] private State.AppState AppState { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
+    private bool _initialized;
+
     protected override void OnInitialized()
     {
         AppState.OnChange += HandleAppStateChanged;
@@ -35,11 +37,12 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (!firstRender || _initialized)
         {
             return;
         }
 
+        _initialized = true;
         await AppState.InitializeAsync();
     }
 

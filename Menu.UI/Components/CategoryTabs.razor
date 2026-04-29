@@ -1,0 +1,61 @@
+@inject Menu.UI.State.AppState AppState
+
+<MudStack Row="true" Spacing="0" Class="category-tabs" role="tablist" aria-label="Menu categories">
+    @for (var i = 0; i < Categories.Count; i++)
+    {
+        var category = Categories[i];
+        var isSelected = SelectedCategoryId == category.Id;
+
+        <button class="category-tabs__tab @(isSelected ? "category-tabs__tab--active" : "")"
+                role="tab"
+                aria-selected="@isSelected"
+                @key="category.Id"
+                @onclick="() => OnSelect(category.Id)">
+            <span class="category-tabs__label">
+                @(GetLocalizedName(category))
+            </span>
+            @if (isSelected)
+            {
+                <span class="category-tabs__indicator" />
+            }
+        </button>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PublicCategoryMenuSummaryDto> Categories { get; set; } = default!;
+    [Parameter, EditorRequired] public Guid SelectedCategoryId { get; set; }
+    [Parameter, EditorRequired] public EventCallback<Guid> OnCategorySelected { get; set; }
+
+    private IReadOnlyList<PublicCategoryMenuSummaryDto>? _renderedCategories;
+    private Guid _renderedSelected;
+    private string? _renderedCulture;
+
+    protected override bool ShouldRender()
+    {
+        var culture = AppState.Culture;
+        if (ReferenceEquals(_renderedCategories, Categories)
+            && _renderedSelected == SelectedCategoryId
+            && _renderedCulture == culture)
+        {
+            return false;
+        }
+
+        _renderedCategories = Categories;
+        _renderedSelected = SelectedCategoryId;
+        _renderedCulture = culture;
+        return true;
+    }
+
+    private string GetLocalizedName(PublicCategoryMenuSummaryDto category)
+    {
+        return AppState.Culture == "ar" && !string.IsNullOrWhiteSpace(category.NameAr)
+            ? category.NameAr
+            : category.Name;
+    }
+
+    private async Task OnSelect(Guid categoryId)
+    {
+        await OnCategorySelected.InvokeAsync(categoryId);
+    }
+}

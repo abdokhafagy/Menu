@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Menu.Api.Filters;
 using Menu.Application.Common.Models;
 using Menu.Application.DTOs.Permission;
 using Menu.Application.Interfaces;
+using Menu.Domain.Authorization;
 
 namespace Menu.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = RoleNames.SuperAdmin)]
 public class PermissionsController : ControllerBase
 {
     private readonly IPermissionService _service;
@@ -21,6 +21,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = PermissionNames.PermissionsView)]
     public async Task<ActionResult<ApiResponse<PaginatedResult<PermissionDto>>>> GetAll([FromQuery] QueryParameters query, CancellationToken ct)
     {
         var result = await _service.GetAllAsync(query, ct);
@@ -28,6 +29,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = PermissionNames.PermissionsView)]
     public async Task<ActionResult<ApiResponse<PermissionDto>>> GetById(Guid id, CancellationToken ct)
     {
         var result = await _service.GetByIdAsync(id, ct);
@@ -35,7 +37,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpPost]
-    [RequirePermission("permissions.create")]
+    [Authorize(Policy = PermissionNames.PermissionsCreate)]
     public async Task<ActionResult<ApiResponse<PermissionDto>>> Create([FromBody] CreatePermissionDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -43,7 +45,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [RequirePermission("permissions.update")]
+    [Authorize(Policy = PermissionNames.PermissionsUpdate)]
     public async Task<ActionResult<ApiResponse<PermissionDto>>> Update(Guid id, [FromBody] UpdatePermissionDto dto, CancellationToken ct)
     {
         var result = await _service.UpdateAsync(id, dto, ct);
@@ -51,7 +53,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [RequirePermission("permissions.delete")]
+    [Authorize(Policy = PermissionNames.PermissionsDelete)]
     public async Task<ActionResult<ApiResponse<string>>> Delete(Guid id, CancellationToken ct)
     {
         await _service.DeleteAsync(id, ct);

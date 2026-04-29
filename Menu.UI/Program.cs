@@ -1,6 +1,7 @@
 using Blazored.LocalStorage;
 
 using Menu.UI.Auth;
+
 using Menu.UI.Services;
 using Menu.UI.State;
 
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 using MudBlazor;
 using MudBlazor.Services;
+using System.Globalization;
 
 namespace Menu.UI
 {
@@ -63,6 +65,8 @@ namespace Menu.UI
             builder.Services.AddScoped<AppState>();
             builder.Services.AddScoped<UserState>();
             builder.Services.AddScoped<CartState>();
+            builder.Services.AddScoped<UserContextService>();
+            builder.Services.AddScoped<AuthorizationService>();
 
             builder.Services.AddMudServices(config =>
             {

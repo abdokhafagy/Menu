@@ -1,0 +1,244 @@
+@page "/authorization-examples"
+@attribute [Authorize]
+@inject UserContextService UserContextService
+@using System.Security.Claims
+
+<PageHeader Title="Authorization Examples" SubTitle="Frontend authorization patterns and usage" />
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudText Typo="Typo.h4" Class="mb-6">Authorization Implementation Guide</MudText>
+
+    <!-- 1. Permission-Based Visibility -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">1. Permission-Based Visibility (PermissionView)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Show/hide UI components based on user permissions.
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Live Demo:</MudText>
+            <PermissionView Permission="menus.edit">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary">
+                    Edit Menu (hidden if no permission)
+                </MudButton>
+            </PermissionView>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 2. Fallback UI -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">2. Fallback Content (Alternative for unauthorized)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Show alternative content if user lacks permission.
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Live Demo:</MudText>
+            <PermissionView Permission="users.delete" Fallback="@UnauthorizedMessage">
+                <MudButton Variant="Variant.Filled" Color="Color.Error">
+                    Delete User
+                </MudButton>
+            </PermissionView>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 3. Role-Based Visibility -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">3. Role-Based Visibility (PermissionView)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Show/hide based on user roles.
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Live Demo:</MudText>
+            <PermissionView Role="SuperAdmin">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Shield">
+                    SuperAdmin Only
+                </MudChip>
+            </PermissionView>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 4. Multiple Roles (Any One) -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">4. Multiple Roles (User needs ANY one)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Show if user has any of the specified roles.
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Live Demo:</MudText>
+            @{
+                var rolesArray = new[] { "SuperAdmin", "Admin" };
+                <PermissionView Roles="@rolesArray">
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Shield" Color="Color.Warning">
+                        SuperAdmin or Admin Only
+                    </MudChip>
+                </PermissionView>
+            }
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 5. Permission + Role Combination -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">5. Permission + Role Combined (Both required)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Require BOTH a role AND a permission.
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Live Demo:</MudText>
+            <PermissionView Role="Manager" Permission="menuitems.create">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary">
+                    Create Menu Item (needs Manager role + menuitems.create permission)
+                </MudButton>
+            </PermissionView>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 6. AuthorizeView (Built-in) -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">6. AuthorizeView (Built-in Blazor)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Built-in Blazor component for role-based visibility.
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Live Demo:</MudText>
+            <AuthorizeView Roles="SuperAdmin">
+                <Authorized>
+                    <MudChip T="string" Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Success">
+                        ✓ You have SuperAdmin role
+                    </MudChip>
+                </Authorized>
+                <NotAuthorized>
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Block" Color="Color.Error">
+                        ✗ You don't have SuperAdmin role
+                    </MudChip>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 7. Service-Based Checks -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">7. Code-Behind Logic (UserContextService)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" Class="mb-4">
+                Use UserContextService for custom authorization logic in code-behind.
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CheckAuth" Class="mb-4">
+                Check My Permissions (see browser console)
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- 8. Your Current Context -->
+    <MudCard Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Your Current Authorization Context</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">User ID:</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-4">
+                        @(_userId?.ToString() ?? "Not authenticated")
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Restaurant ID (Tenant):</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-4">
+                        @(_restaurantId?.ToString() ?? "Not authenticated")
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Roles (@_roles.Count):</MudText>
+                    <div Class="mb-4">
+                        @if (_roles.Count > 0)
+                        {
+                            @foreach (var role in _roles)
+                            {
+                                <MudChip T="string" Size="Size.Small" Class="mr-2">@role</MudChip>
+                            }
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2">No roles assigned</MudText>
+                        }
+                    </div>
+                </MudItem>
+            </MudGrid>
+
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Permissions (@_permissions.Count):</MudText>
+            <div>
+                @if (_permissions.Count > 0)
+                {
+                    @foreach (var permission in _permissions)
+                    {
+                        <MudChip T="string" Size="Size.Small" Class="mr-2">@permission</MudChip>
+                    }
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">No permissions assigned</MudText>
+                }
+            </div>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private Guid? _userId;
+    private Guid? _restaurantId;
+    private IReadOnlyList<string> _roles = Array.Empty<string>();
+    private IReadOnlyList<string> _permissions = Array.Empty<string>();
+
+    protected override void OnInitialized()
+    {
+        _userId = UserContextService.GetUserId();
+        _restaurantId = UserContextService.GetRestaurantId();
+        _roles = UserContextService.GetRoles();
+        _permissions = UserContextService.GetPermissions();
+    }
+
+    private void CheckAuth()
+    {
+        var hasMenuEdit = UserContextService.HasPermission("menus.edit");
+        var isAdmin = UserContextService.HasRole("Admin");
+        var restaurantId = UserContextService.GetRestaurantId();
+
+        Console.WriteLine($"Has menus.edit permission: {hasMenuEdit}");
+        Console.WriteLine($"Is Admin role: {isAdmin}");
+        Console.WriteLine($"Restaurant ID (Tenant): {restaurantId}");
+        Console.WriteLine("---");
+    }
+
+    private RenderFragment UnauthorizedMessage => 
+        @<MudAlert Severity="Severity.Warning" Dense="true">
+            You don't have permission for this action.
+        </MudAlert>;
+}

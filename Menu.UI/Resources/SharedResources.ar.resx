@@ -1,0 +1,664 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App.Title" xml:space="preserve">
+    <value>إدارة القائمة</value>
+  </data>
+  <data name="Common.Logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="Theme.Dark" xml:space="preserve">
+    <value>داكن</value>
+  </data>
+  <data name="Language.Toggle" xml:space="preserve">
+    <value>محدد اللغة</value>
+  </data>
+  <data name="Navigation.Workspace" xml:space="preserve">
+    <value>مساحة العمل</value>
+  </data>
+  <data name="Navigation.SectionOverview" xml:space="preserve">
+    <value>نظرة عامة</value>
+  </data>
+  <data name="Navigation.SectionManagement" xml:space="preserve">
+    <value>الإدارة</value>
+  </data>
+  <data name="Navigation.SectionAccess" xml:space="preserve">
+    <value>الصلاحيات</value>
+  </data>
+  <data name="Navigation.Dashboard" xml:space="preserve">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="Navigation.Sessions" xml:space="preserve">
+    <value>الجلسات</value>
+  </data>
+  <data name="Navigation.Restaurants" xml:space="preserve">
+    <value>المطاعم</value>
+  </data>
+  <data name="Navigation.Menus" xml:space="preserve">
+    <value>القوائم</value>
+  </data>
+  <data name="Navigation.Categories" xml:space="preserve">
+    <value>الفئات</value>
+  </data>
+  <data name="Navigation.MenuItems" xml:space="preserve">
+    <value>عناصر القائمة</value>
+  </data>
+  <data name="Navigation.ItemOptions" xml:space="preserve">
+    <value>خيارات العنصر</value>
+  </data>
+  <data name="Navigation.OptionValues" xml:space="preserve">
+    <value>قيم الخيارات</value>
+  </data>
+  <data name="Navigation.Users" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="Navigation.Roles" xml:space="preserve">
+    <value>الأدوار</value>
+  </data>
+  <data name="Navigation.Permissions" xml:space="preserve">
+    <value>الأذونات</value>
+  </data>
+  <data name="Common.Actions" xml:space="preserve">
+    <value>الإجراءات</value>
+  </data>
+  <data name="Common.Active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="Common.Inactive" xml:space="preserve">
+    <value>غير نشط</value>
+  </data>
+  <data name="Common.Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="Users.PageTitle" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="Users.SubTitle" xml:space="preserve">
+    <value>مراجعة مستخدمي التطبيق</value>
+  </data>
+  <data name="Users.Add" xml:space="preserve">
+    <value>إضافة مستخدم</value>
+  </data>
+  <data name="Users.Username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="Users.Email" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="Users.FullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="Users.Restaurant" xml:space="preserve">
+    <value>المطعم</value>
+  </data>
+  <data name="Users.Status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="Users.CreateDialogTitle" xml:space="preserve">
+    <value>إنشاء مستخدم</value>
+  </data>
+  <data name="Users.EditDialogTitle" xml:space="preserve">
+    <value>تعديل مستخدم</value>
+  </data>
+  <data name="Users.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء المستخدم بنجاح.</value>
+  </data>
+  <data name="Users.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث المستخدم بنجاح.</value>
+  </data>
+  <data name="Users.DeleteTitle" xml:space="preserve">
+    <value>حذف مستخدم</value>
+  </data>
+  <data name="Users.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف المستخدم '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="Users.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف المستخدم.</value>
+  </data>
+  <data name="Menus.PageTitle" xml:space="preserve">
+    <value>القوائم</value>
+  </data>
+  <data name="Menus.SubTitle" xml:space="preserve">
+    <value>القوائم المرتبطة بالمطاعم</value>
+  </data>
+  <data name="Menus.Add" xml:space="preserve">
+    <value>إضافة قائمة</value>
+  </data>
+  <data name="Menus.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Menus.Restaurant" xml:space="preserve">
+    <value>المطعم</value>
+  </data>
+  <data name="Menus.Status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="Menus.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة قائمة</value>
+  </data>
+  <data name="Menus.EditDialogTitle" xml:space="preserve">
+    <value>تعديل قائمة</value>
+  </data>
+  <data name="Menus.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء القائمة.</value>
+  </data>
+  <data name="Menus.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث القائمة.</value>
+  </data>
+  <data name="Menus.DeleteTitle" xml:space="preserve">
+    <value>حذف قائمة</value>
+  </data>
+  <data name="Menus.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف القائمة '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="Menus.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف القائمة.</value>
+  </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+  <data name="Common.Ok" xml:space="preserve">
+    <value>موافق</value>
+  </data>
+  <data name="Common.Yes" xml:space="preserve">
+    <value>نعم</value>
+  </data>
+  <data name="Common.No" xml:space="preserve">
+    <value>لا</value>
+  </data>
+  <data name="Dashboard.PageTitle" xml:space="preserve">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="Dashboard.SubTitle" xml:space="preserve">
+    <value>نظرة سريعة على مساحة إدارة القوائم</value>
+  </data>
+  <data name="Dashboard.Restaurants" xml:space="preserve">
+    <value>المطاعم</value>
+  </data>
+  <data name="Dashboard.Users" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="Dashboard.Menus" xml:space="preserve">
+    <value>القوائم</value>
+  </data>
+  <data name="Dashboard.Items" xml:space="preserve">
+    <value>العناصر</value>
+  </data>
+  <data name="NotFound.PageTitle" xml:space="preserve">
+    <value>غير موجود</value>
+  </data>
+  <data name="NotFound.Title" xml:space="preserve">
+    <value>الصفحة غير موجودة</value>
+  </data>
+  <data name="NotFound.Message" xml:space="preserve">
+    <value>الصفحة المطلوبة غير موجودة.</value>
+  </data>
+  <data name="NotFound.GoDashboard" xml:space="preserve">
+    <value>العودة إلى لوحة التحكم</value>
+  </data>
+  <data name="Unauthorized.PageTitle" xml:space="preserve">
+    <value>غير مصرح</value>
+  </data>
+  <data name="Unauthorized.Title" xml:space="preserve">
+    <value>تم رفض الوصول</value>
+  </data>
+  <data name="Unauthorized.Message" xml:space="preserve">
+    <value>جلستك الحالية غير مصرح بها لهذه الصفحة. يرجى تسجيل الدخول مرة أخرى.</value>
+  </data>
+  <data name="Unauthorized.GoToLogin" xml:space="preserve">
+    <value>الذهاب إلى تسجيل الدخول</value>
+  </data>
+  <data name="PublicMenuLayout.Title" xml:space="preserve">
+    <value>قائمة المطعم</value>
+  </data>
+  <data name="PublicMenuLayout.SubTitle" xml:space="preserve">
+    <value>عرض الضيف للقراءة فقط</value>
+  </data>
+  <data name="Categories.PageTitle" xml:space="preserve">
+    <value>الفئات</value>
+  </data>
+  <data name="Categories.SubTitle" xml:space="preserve">
+    <value>مجموعات الفئات داخل القوائم</value>
+  </data>
+  <data name="Categories.Add" xml:space="preserve">
+    <value>إضافة فئة</value>
+  </data>
+  <data name="Categories.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Categories.NameAr" xml:space="preserve">
+    <value>الاسم بالعربية</value>
+  </data>
+  <data name="Categories.Order" xml:space="preserve">
+    <value>الترتيب</value>
+  </data>
+  <data name="Categories.Menu" xml:space="preserve">
+    <value>القائمة</value>
+  </data>
+  <data name="Categories.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة فئة</value>
+  </data>
+  <data name="Categories.EditDialogTitle" xml:space="preserve">
+    <value>تعديل فئة</value>
+  </data>
+  <data name="Categories.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء الفئة.</value>
+  </data>
+  <data name="Categories.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث الفئة.</value>
+  </data>
+  <data name="Categories.DeleteTitle" xml:space="preserve">
+    <value>حذف فئة</value>
+  </data>
+  <data name="Categories.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف الفئة '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="Categories.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف الفئة.</value>
+  </data>
+  <data name="ItemOptions.PageTitle" xml:space="preserve">
+    <value>خيارات العنصر</value>
+  </data>
+  <data name="ItemOptions.SubTitle" xml:space="preserve">
+    <value>المعدلات ومجموعات الخيارات</value>
+  </data>
+  <data name="ItemOptions.Add" xml:space="preserve">
+    <value>إضافة خيار</value>
+  </data>
+  <data name="ItemOptions.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="ItemOptions.Type" xml:space="preserve">
+    <value>النوع</value>
+  </data>
+  <data name="ItemOptions.Required" xml:space="preserve">
+    <value>إجباري</value>
+  </data>
+  <data name="ItemOptions.Item" xml:space="preserve">
+    <value>العنصر</value>
+  </data>
+  <data name="ItemOptions.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة خيار</value>
+  </data>
+  <data name="ItemOptions.EditDialogTitle" xml:space="preserve">
+    <value>تعديل خيار</value>
+  </data>
+  <data name="ItemOptions.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء خيار العنصر.</value>
+  </data>
+  <data name="ItemOptions.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث خيار العنصر.</value>
+  </data>
+  <data name="ItemOptions.DeleteTitle" xml:space="preserve">
+    <value>حذف خيار</value>
+  </data>
+  <data name="ItemOptions.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف الخيار '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="ItemOptions.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف خيار العنصر.</value>
+  </data>
+  <data name="OptionValues.PageTitle" xml:space="preserve">
+    <value>قيم الخيارات</value>
+  </data>
+  <data name="OptionValues.SubTitle" xml:space="preserve">
+    <value>قيم قابلة للاختيار ضمن مجموعات الخيارات</value>
+  </data>
+  <data name="OptionValues.Add" xml:space="preserve">
+    <value>إضافة قيمة</value>
+  </data>
+  <data name="OptionValues.Value" xml:space="preserve">
+    <value>القيمة</value>
+  </data>
+  <data name="OptionValues.PriceDelta" xml:space="preserve">
+    <value>فرق السعر</value>
+  </data>
+  <data name="OptionValues.Default" xml:space="preserve">
+    <value>افتراضي</value>
+  </data>
+  <data name="OptionValues.Option" xml:space="preserve">
+    <value>الخيار</value>
+  </data>
+  <data name="OptionValues.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة قيمة</value>
+  </data>
+  <data name="OptionValues.EditDialogTitle" xml:space="preserve">
+    <value>تعديل قيمة</value>
+  </data>
+  <data name="OptionValues.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء قيمة الخيار.</value>
+  </data>
+  <data name="OptionValues.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث قيمة الخيار.</value>
+  </data>
+  <data name="OptionValues.DeleteTitle" xml:space="preserve">
+    <value>حذف قيمة</value>
+  </data>
+  <data name="OptionValues.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف قيمة الخيار '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="OptionValues.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف قيمة الخيار.</value>
+  </data>
+  <data name="MenuItems.PageTitle" xml:space="preserve">
+    <value>عناصر القائمة</value>
+  </data>
+  <data name="MenuItems.SubTitle" xml:space="preserve">
+    <value>العناصر المعروضة للعملاء</value>
+  </data>
+  <data name="MenuItems.Add" xml:space="preserve">
+    <value>إضافة عنصر</value>
+  </data>
+  <data name="MenuItems.Image" xml:space="preserve">
+    <value>الصورة</value>
+  </data>
+  <data name="MenuItems.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="MenuItems.Price" xml:space="preserve">
+    <value>السعر</value>
+  </data>
+  <data name="MenuItems.Category" xml:space="preserve">
+    <value>الفئة</value>
+  </data>
+  <data name="MenuItems.Available" xml:space="preserve">
+    <value>متاح</value>
+  </data>
+  <data name="MenuItems.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة عنصر</value>
+  </data>
+  <data name="MenuItems.EditDialogTitle" xml:space="preserve">
+    <value>تعديل عنصر</value>
+  </data>
+  <data name="MenuItems.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء العنصر.</value>
+  </data>
+  <data name="MenuItems.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث العنصر.</value>
+  </data>
+  <data name="MenuItems.DeleteTitle" xml:space="preserve">
+    <value>حذف عنصر</value>
+  </data>
+  <data name="MenuItems.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف العنصر '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="MenuItems.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف العنصر.</value>
+  </data>
+  <data name="Roles.PageTitle" xml:space="preserve">
+    <value>الأدوار</value>
+  </data>
+  <data name="Roles.SubTitle" xml:space="preserve">
+    <value>إدارة الأدوار والصلاحيات</value>
+  </data>
+  <data name="Roles.Add" xml:space="preserve">
+    <value>إضافة دور</value>
+  </data>
+  <data name="Roles.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Roles.Created" xml:space="preserve">
+    <value>تاريخ الإنشاء</value>
+  </data>
+  <data name="Roles.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة دور</value>
+  </data>
+  <data name="Roles.EditDialogTitle" xml:space="preserve">
+    <value>تعديل دور</value>
+  </data>
+  <data name="Roles.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء الدور.</value>
+  </data>
+  <data name="Roles.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث الدور.</value>
+  </data>
+  <data name="Roles.DeleteTitle" xml:space="preserve">
+    <value>حذف دور</value>
+  </data>
+  <data name="Roles.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف الدور '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="Roles.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف الدور.</value>
+  </data>
+  <data name="Permissions.PageTitle" xml:space="preserve">
+    <value>الأذونات</value>
+  </data>
+  <data name="Permissions.SubTitle" xml:space="preserve">
+    <value>كتالوج أذونات النظام</value>
+  </data>
+  <data name="Permissions.Add" xml:space="preserve">
+    <value>إضافة إذن</value>
+  </data>
+  <data name="Permissions.Name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="Permissions.Module" xml:space="preserve">
+    <value>الوحدة</value>
+  </data>
+  <data name="Permissions.Description" xml:space="preserve">
+    <value>الوصف</value>
+  </data>
+  <data name="Permissions.CreateDialogTitle" xml:space="preserve">
+    <value>إضافة إذن</value>
+  </data>
+  <data name="Permissions.EditDialogTitle" xml:space="preserve">
+    <value>تعديل إذن</value>
+  </data>
+  <data name="Permissions.CreatedSuccess" xml:space="preserve">
+    <value>تم إنشاء الإذن.</value>
+  </data>
+  <data name="Permissions.UpdatedSuccess" xml:space="preserve">
+    <value>تم تحديث الإذن.</value>
+  </data>
+  <data name="Permissions.DeleteTitle" xml:space="preserve">
+    <value>حذف إذن</value>
+  </data>
+  <data name="Permissions.DeleteMessage" xml:space="preserve">
+    <value>هل تريد حذف الإذن '{0}'؟ لا يمكن التراجع عن هذا الإجراء.</value>
+  </data>
+  <data name="Permissions.DeletedSuccess" xml:space="preserve">
+    <value>تم حذف الإذن.</value>
+  </data>
+  <data name="Sessions.PageTitle" xml:space="preserve">
+    <value>الجلسات</value>
+  </data>
+  <data name="Sessions.SubTitle" xml:space="preserve">
+    <value>مراقبة الجلسات النشطة وإلغاؤها</value>
+  </data>
+  <data name="Sessions.Device" xml:space="preserve">
+    <value>الجهاز</value>
+  </data>
+  <data name="Sessions.IpAddress" xml:space="preserve">
+    <value>عنوان IP</value>
+  </data>
+  <data name="Sessions.Expires" xml:space="preserve">
+    <value>ينتهي في</value>
+  </data>
+  <data name="Sessions.Status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="Sessions.Revoked" xml:space="preserve">
+    <value>ملغاة</value>
+  </data>
+  <data name="Sessions.Revoke" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="Sessions.RevokedSuccess" xml:space="preserve">
+    <value>تم إلغاء الجلسة.</value>
+  </data>
+  <data name="MenuItem.New" xml:space="preserve">
+    <value>جديد</value>
+  </data>
+  <data name="MenuItem.Unavailable" xml:space="preserve">
+    <value>غير متاح</value>
+  </data>
+  <data name="MenuItem.CurrentlyUnavailable" xml:space="preserve">
+    <value>غير متاح حاليا</value>
+  </data>
+  <data name="MenuItem.Customizable" xml:space="preserve">
+    <value>قابل للتخصيص</value>
+  </data>
+  <data name="MenuItem.Details" xml:space="preserve">
+    <value>التفاصيل</value>
+  </data>
+  <data name="Common.Total" xml:space="preserve">
+    <value>الإجمالي</value>
+  </data>
+  <data name="Common.AddToCart" xml:space="preserve">
+    <value>إضافة إلى السلة</value>
+  </data>
+  <data name="MenuItem.Base" xml:space="preserve">
+    <value>الأساسي</value>
+  </data>
+  <data name="MenuItem.NoExtra" xml:space="preserve">
+    <value>بدون إضافة</value>
+  </data>
+  <data name="MenuItem.Required" xml:space="preserve">
+    <value>مطلوب</value>
+  </data>
+  <data name="MenuItem.Optional" xml:space="preserve">
+    <value>اختياري</value>
+  </data>
+  <data name="MenuItem.Any" xml:space="preserve">
+    <value>أي</value>
+  </data>
+  <data name="MenuItem.SelectionHint" xml:space="preserve">
+    <value>المحدد {0} | الحد الأدنى {1} | الحد الأقصى {2}</value>
+  </data>
+  <data name="MenuItem.SelectAtLeast" xml:space="preserve">
+    <value>اختر على الأقل {0}.</value>
+  </data>
+  <data name="MenuItem.SelectAtMost" xml:space="preserve">
+    <value>اختر على الأكثر {0}.</value>
+  </data>
+  <data name="Navigation.AccessControl" xml:space="preserve">
+    <value>التحكم في الوصول</value>
+  </data>
+  <data name="AccessControl.PageTitle" xml:space="preserve">
+    <value>التحكم في الوصول</value>
+  </data>
+  <data name="AccessControl.SubTitle" xml:space="preserve">
+    <value>إدارة الصلاحيات الممنوحة لكل دور.</value>
+  </data>
+  <data name="AccessControl.SaveAll" xml:space="preserve">
+    <value>حفظ الكل</value>
+  </data>
+  <data name="AccessControl.SaveRole" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="AccessControl.SelectAll" xml:space="preserve">
+    <value>تحديد الكل</value>
+  </data>
+  <data name="AccessControl.ClearAll" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+  <data name="AccessControl.Unsaved" xml:space="preserve">
+    <value>غير محفوظ</value>
+  </data>
+  <data name="AccessControl.SaveSuccess" xml:space="preserve">
+    <value>تم تحديث الصلاحيات.</value>
+  </data>
+  <data name="AccessControl.SaveAllSuccess" xml:space="preserve">
+    <value>تم حفظ كل التغييرات.</value>
+  </data>
+  <data name="AccessControl.SaveError" xml:space="preserve">
+    <value>فشل الحفظ: {0}</value>
+  </data>
+  <data name="AccessControl.LoadError" xml:space="preserve">
+    <value>تعذر تحميل الأدوار أو الصلاحيات: {0}</value>
+  </data>
+  <data name="AccessControl.NoRoles" xml:space="preserve">
+    <value>لا توجد أدوار.</value>
+  </data>
+  <data name="AccessControl.UncategorizedModule" xml:space="preserve">
+    <value>أخرى</value>
+  </data>
+  <data name="AccessControl.SelfRoleNotice" xml:space="preserve">
+    <value>قمت بتعديل صلاحيات دور تنتمي إليه. سجّل خروجك وادخل من جديد لتطبيق التغييرات.</value>
+  </data>
+  <data name="Common.Refresh" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="Common.Saving" xml:space="preserve">
+    <value>جاري الحفظ...</value>
+  </data>
+  <data name="Common.Loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="Users.Role" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="Users.NoRoles" xml:space="preserve">
+    <value>لا توجد أدوار</value>
+  </data>
+  <data name="Users.NoRoleSelected" xml:space="preserve">
+    <value>(بدون)</value>
+  </data>
+  <data name="Users.RoleRequired" xml:space="preserve">
+    <value>يرجى اختيار دور.</value>
+  </data>
+  <data name="Users.RoleAssignError" xml:space="preserve">
+    <value>تم حفظ المستخدم، لكن فشل تعيين الدور: {0}</value>
+  </data>
+</root>

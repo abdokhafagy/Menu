@@ -1,0 +1,63 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
+<MudDialog Class="item-readonly-modal">
+    <DialogContent>
+        <div class="item-readonly-modal__hero">
+            <img src="@GetImageUrl()"
+                 alt="@GetItemName()"
+                 class="item-readonly-modal__hero-img"
+                 loading="lazy"
+                 onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80'" />
+
+            @if (!Item.IsAvailable)
+            {
+                <div class="item-readonly-modal__hero-badge">
+                    <span class="badge badge--unavailable">@L["MenuItem.Unavailable"]</span>
+                </div>
+            }
+        </div>
+
+        <div class="item-readonly-modal__body">
+            <div class="item-readonly-modal__header">
+                <MudText Typo="Typo.h5" Class="item-readonly-modal__name">
+                    @(GetItemName())
+                </MudText>
+                <MudText Typo="Typo.h6" Class="item-readonly-modal__price">
+                    @(Item.Price.ToString("N2"))
+                </MudText>
+            </div>
+
+            <MudText Typo="Typo.body2" Class="text-muted">
+                Full item details are temporarily unavailable.
+            </MudText>
+        </div>
+
+        <div class="item-readonly-modal__footer">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="Close"
+                       Class="item-readonly-modal__close-btn">
+                @L["Common.Close"]
+            </MudButton>
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [Inject] private State.AppState AppState { get; set; } = default!;
+
+    [Parameter, EditorRequired] public PublicMenuItemSummaryDto Item { get; set; } = default!;
+
+    private string GetItemName()
+        => AppState.Culture == "ar" && !string.IsNullOrWhiteSpace(Item.NameAr)
+            ? Item.NameAr
+            : Item.Name;
+
+    private string GetImageUrl()
+        => !string.IsNullOrWhiteSpace(Item.ImageUrl)
+            ? Item.ImageUrl
+            : "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80";
+
+    private void Close() => MudDialog.Close();
+}

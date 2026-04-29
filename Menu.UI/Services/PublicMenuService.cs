@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Net.Http.Headers;
 using System.Text.Json;
 
 using Menu.UI.Models;
@@ -30,26 +29,25 @@ public sealed class PublicMenuService
         return menus ?? new List<PublicMenuDto>();
     }
 
-    public Task<PublicMenuFullDto?> GetFullMenuAsync(Guid menuId, bool includeOptions = true, CancellationToken ct = default)
+    public Task<PublicMenuSummaryDto?> GetRestaurantMenuAsync(Guid restaurantId, Guid? menuId = null, CancellationToken ct = default)
+    {
+        var url = menuId.HasValue
+            ? $"api/public/restaurants/{restaurantId}/menu?menuId={menuId.Value}"
+            : $"api/public/restaurants/{restaurantId}/menu";
+
+        return GetPublicAsync<PublicMenuSummaryDto>(url, ct);
+    }
+
+    public Task<PublicMenuFullDto?> GetFullMenuAsync(Guid menuId, bool includeOptions = false, CancellationToken ct = default)
         => GetPublicAsync<PublicMenuFullDto>($"api/public/menus/{menuId}/full?includeOptions={includeOptions.ToString().ToLowerInvariant()}", ct);
 
     public Task<PublicMenuItemDetailDto?> GetItemDetailAsync(Guid itemId, CancellationToken ct = default)
-        => GetPublicAsync<PublicMenuItemDetailDto>($"api/public/items/{itemId}", ct);
+        => GetPublicAsync<PublicMenuItemDetailDto>($"api/public/menu-items/{itemId}", ct);
 
     private async Task<T?> GetPublicAsync<T>(string url, CancellationToken ct)
     {
         var client = _httpClientFactory.CreateClient("MenuApiNoAuth");
-        var requestUrl = AppendCacheBuster(url);
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-        request.Headers.CacheControl = new CacheControlHeaderValue
-        {
-            NoCache = true,
-            NoStore = true,
-            MustRevalidate = true
-        };
-        request.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
-
-        var response = await client.SendAsync(request, ct);
+        using var response = await client.GetAsync(url, ct);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -69,12 +67,6 @@ public sealed class PublicMenuService
         }
 
         return payload.Data;
-    }
-
-    private static string AppendCacheBuster(string url)
-    {
-        var separator = url.Contains('?', StringComparison.Ordinal) ? '&' : '?';
-        return $"{url}{separator}_ts={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
     }
 
     private static Exception ParseErrorOrThrow(HttpResponseMessage response, string body)

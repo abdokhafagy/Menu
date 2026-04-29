@@ -1,3 +1,4 @@
+using Menu.Application.Interfaces;
 using Menu.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,9 +6,17 @@ namespace Menu.Infrastructure.Data;
 
 public class AppDbContext : DbContext
 {
+    private readonly ITenantContext _tenantContext;
+
     public AppDbContext(DbContextOptions<AppDbContext> options)
+        : this(options, new NullTenantContext())
+    {
+    }
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext tenantContext)
         : base(options)
     {
+        _tenantContext = tenantContext;
     }
 
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
@@ -29,6 +38,42 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        ApplyTenantFilters(modelBuilder);
+    }
+
+    private void ApplyTenantFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Restaurant>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.Id == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<User>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.RestaurantId == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<Menu.Domain.Entities.Menu>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.RestaurantId == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<Category>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.Menu.RestaurantId == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<MenuItem>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.Category.Menu.RestaurantId == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<ItemOption>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.MenuItem.Category.Menu.RestaurantId == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<OptionValue>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.ItemOption.MenuItem.Category.Menu.RestaurantId == _tenantContext.RestaurantId));
+
+        modelBuilder.Entity<ItemImage>().HasQueryFilter(x =>
+            !x.IsDeleted &&
+            (!_tenantContext.RequiresRestaurantScope || x.MenuItem.Category.Menu.RestaurantId == _tenantContext.RestaurantId));
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -49,5 +94,17 @@ public class AppDbContext : DbContext
         }
 
         return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private sealed class NullTenantContext : ITenantContext
+    {
+        public bool IsAuthenticated => false;
+        public bool IsSuperAdmin => false;
+        public bool RequiresRestaurantScope => false;
+        public Guid? RestaurantId => null;
+
+        public bool CanAccessRestaurant(Guid restaurantId) => true;
+
+        public Guid GetRequiredRestaurantId() => throw new InvalidOperationException("Tenant context is not available.");
     }
 }

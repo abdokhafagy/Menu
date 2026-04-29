@@ -14,3 +14,5 @@ public record UpdateUserDto(
     string? FullName,
     bool IsActive,
     Guid RestaurantId);
+
+public record AssignRolesDto(List<Guid> RoleIds);

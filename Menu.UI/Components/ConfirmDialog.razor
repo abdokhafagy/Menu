@@ -1,11 +1,13 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
 <MudDialog>
     <DialogContent>
         <MudText Typo="Typo.h6">@Title</MudText>
         <MudText Typo="Typo.body2" Class="mt-2">@Message</MudText>
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="@Color" OnClick="Confirm">@ConfirmText</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">@CancelTextOrDefault</MudButton>
+        <MudButton Variant="Variant.Filled" Color="@Color" OnClick="Confirm">@ConfirmTextOrDefault</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -14,8 +16,12 @@
 
     [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
     [Parameter, EditorRequired] public string Message { get; set; } = string.Empty;
-    [Parameter] public string ConfirmText { get; set; } = "Delete";
+    [Parameter] public string? ConfirmText { get; set; }
+    [Parameter] public string? CancelText { get; set; }
     [Parameter] public Color Color { get; set; } = Color.Error;
+
+    private string ConfirmTextOrDefault => string.IsNullOrWhiteSpace(ConfirmText) ? L["Common.Delete"] : ConfirmText;
+    private string CancelTextOrDefault => string.IsNullOrWhiteSpace(CancelText) ? L["Common.Cancel"] : CancelText;
 
     private void Cancel() => MudDialog.Cancel();
     private void Confirm() => MudDialog.Close(DialogResult.Ok(true));

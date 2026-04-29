@@ -1,0 +1,26 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
+<MudStack AlignItems="AlignItems.Center" Spacing="3" Class="empty-state py-8">
+    <div class="empty-state__icon">
+        <MudIcon Icon="@Icon" Size="Size.Large" Color="@IconColor" />
+    </div>
+    <MudText Typo="Typo.h6" Class="empty-state__title" Color="Color.Default">@Title</MudText>
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <MudText Typo="Typo.body2" Class="empty-state__description" Color="Color.Default">
+            @Description
+        </MudText>
+    }
+    @if (ActionContent is not null)
+    {
+        <MudStack Spacing="2" Class="mt-2">@ActionContent</MudStack>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Inbox;
+    [Parameter] public Color IconColor { get; set; } = Color.Default;
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+}

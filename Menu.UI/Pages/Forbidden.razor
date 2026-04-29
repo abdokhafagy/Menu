@@ -1,0 +1,23 @@
+@page "/forbidden"
+@inject NavigationManager NavigationManager
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+
+<PageHeader Title="Access Denied" SubTitle="You do not have permission to access this resource." />
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudCard>
+        <MudCardContent>
+            <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Error" Class="mb-4" />
+            <MudText Typo="Typo.h5" Class="mb-4">@L["Forbidden.Title"]</MudText>
+            <MudText Typo="Typo.body1" Class="mb-6">
+                @L["Forbidden.Message"]
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/"))">
+                @L["Forbidden.ReturnHome"]
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+}

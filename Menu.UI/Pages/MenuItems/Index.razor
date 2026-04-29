@@ -1,14 +1,16 @@
 @page "/menu-items"
 @attribute [Authorize]
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+@using Menu.UI.Components
 
 <PageTitle>@L["MenuItems.PageTitle"]</PageTitle>
 
 <PageHeader Title="@L["MenuItems.PageTitle"]" SubTitle="@L["MenuItems.SubTitle"]">
     <Actions>
-        <AuthorizeView Roles="superadmin" Context="authState">
+        <PermissionView Permission="@AppPermissions.MenuItemsCreate">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAsync">@L["MenuItems.Add"]</MudButton>
-        </AuthorizeView>
+        </PermissionView>
     </Actions>
 </PageHeader>
 
@@ -20,9 +22,9 @@
             <MudTh>@L["MenuItems.Price"]</MudTh>
             <MudTh>@L["MenuItems.Category"]</MudTh>
             <MudTh>@L["MenuItems.Available"]</MudTh>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.MenuItemsUpdate">
                 <MudTh>@L["Common.Actions"]</MudTh>
-            </AuthorizeView>
+            </PermissionView>
         </HeaderContent>
         <RowTemplate>
             <MudTd>
@@ -39,14 +41,18 @@
             <MudTd>@context.Price</MudTd>
             <MudTd>@(context.CategoryName ?? "-")</MudTd>
             <MudTd><MudChip T="string" Color="@(context.IsAvailable ? Color.Success : Color.Error)">@(context.IsAvailable ? L["Common.Yes"] : L["Common.No"])</MudChip></MudTd>
-            <AuthorizeView Roles="superadmin" Context="authState">
+            <PermissionView Permission="@AppPermissions.MenuItemsUpdate">
                 <MudTd>
                     <MudStack Row="true" Spacing="1" Class="entity-actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        <PermissionView Permission="@AppPermissions.MenuItemsUpdate">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(context)" />
+                        </PermissionView>
+                        <PermissionView Permission="@AppPermissions.MenuItemsDelete">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" />
+                        </PermissionView>
                     </MudStack>
                 </MudTd>
-            </AuthorizeView>
+            </PermissionView>
         </RowTemplate>
         <PagerContent>
             <MudTablePager PageSizeOptions="new[] { 10, 20, 50 }" />
@@ -62,12 +68,16 @@
                     <MudText Typo="Typo.body2">@L["MenuItems.Price"]: @item.Price</MudText>
                     <MudText Typo="Typo.body2">@(item.CategoryName ?? "-")</MudText>
                     <MudChip T="string" Color="@(item.IsAvailable ? Color.Success : Color.Error)">@(item.IsAvailable ? L["Common.Yes"] : L["Common.No"])</MudChip>
-                    <AuthorizeView Roles="superadmin" Context="authState">
+                    <PermissionView Permission="@AppPermissions.MenuItemsUpdate">
                         <MudStack Row="true" Spacing="1" Class="entity-actions">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(item)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(item)" />
+                            <PermissionView Permission="@AppPermissions.MenuItemsUpdate">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditAsync(item)" />
+                            </PermissionView>
+                            <PermissionView Permission="@AppPermissions.MenuItemsDelete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(item)" />
+                            </PermissionView>
                         </MudStack>
-                    </AuthorizeView>
+                    </PermissionView>
                 </MudStack>
             </MudPaper>
         }

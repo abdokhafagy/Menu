@@ -2,6 +2,9 @@
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Components
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
+@using Menu.UI.Auth
+@using Menu.UI.Components
+
 
 <PageTitle>@L["Sessions.PageTitle"]</PageTitle>
 
@@ -22,7 +25,9 @@
             <MudTh>@L["Sessions.IpAddress"]</MudTh>
             <MudTh>@L["Sessions.Expires"]</MudTh>
             <MudTh>@L["Sessions.Status"]</MudTh>
-            <MudTh>@L["Common.Actions"]</MudTh>
+            <PermissionView Permission="@AppPermissions.SessionsUpdate">
+                <MudTh>@L["Common.Actions"]</MudTh>
+            </PermissionView>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.Device</MudTd>
@@ -31,14 +36,16 @@
             <MudTd>
                 <MudChip T="string" Color="@(context.IsRevoked ? Color.Error : Color.Success)">@(context.IsRevoked ? L["Sessions.Revoked"] : L["Common.Active"])</MudChip>
             </MudTd>
-            <MudTd>
-                @if (!context.IsRevoked)
-                {
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(context.Id)">
-                        @L["Sessions.Revoke"]
-                    </MudButton>
-                }
-            </MudTd>
+            <PermissionView Permission="@AppPermissions.SessionsUpdate">
+                <MudTd>
+                    @if (!context.IsRevoked)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(context.Id)">
+                            @L["Sessions.Revoke"]
+                        </MudButton>
+                    }
+                </MudTd>
+            </PermissionView>
         </RowTemplate>
         <PagerContent>
             <MudTablePager PageSizeOptions="@PageSizeOptions" />
@@ -54,12 +61,14 @@
                     <MudText Typo="Typo.body2">@session.IpAddress</MudText>
                     <MudText Typo="Typo.body2">@L["Sessions.Expires"]: @session.ExpiresAt.ToLocalTime().ToString("g")</MudText>
                     <MudChip T="string" Color="@(session.IsRevoked ? Color.Error : Color.Success)">@(session.IsRevoked ? L["Sessions.Revoked"] : L["Common.Active"])</MudChip>
-                    @if (!session.IsRevoked)
-                    {
-                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(session.Id)">
-                            @L["Sessions.Revoke"]
-                        </MudButton>
-                    }
+                    <PermissionView Permission="@AppPermissions.SessionsUpdate">
+                        @if (!session.IsRevoked)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RevokeAsync(session.Id)">
+                                @L["Sessions.Revoke"]
+                            </MudButton>
+                        }
+                    </PermissionView>
                 </MudStack>
             </MudPaper>
         }

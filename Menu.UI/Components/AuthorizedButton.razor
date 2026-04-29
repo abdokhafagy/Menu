@@ -1,0 +1,79 @@
+@namespace Menu.UI.Components
+@inject UserContextService UserContextService
+
+<MudButton 
+    Variant="Variant.Filled"
+    Color="Color.Primary"
+    OnClick="OnClick"
+    Disabled="@IsDisabled">
+    @ChildContent
+</MudButton>
+
+@code {
+    /// <summary>
+    /// Permission required to enable this button.
+    /// </summary>
+    [Parameter]
+    public string? Permission { get; set; }
+
+    /// <summary>
+    /// Role required to enable this button.
+    /// </summary>
+    [Parameter]
+    public string? Role { get; set; }
+
+    /// <summary>
+    /// Click callback.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Button content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Custom disabled state.
+    /// </summary>
+    [Parameter]
+    public bool CustomDisabled { get; set; }
+
+    private bool IsDisabled { get; set; }
+    private string DisabledReason { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        UpdateDisabledState();
+    }
+
+    private void UpdateDisabledState()
+    {
+        if (CustomDisabled)
+        {
+            IsDisabled = true;
+            DisabledReason = "This action is not available";
+            return;
+        }
+
+        var hasPermission = string.IsNullOrEmpty(Permission) || UserContextService.HasPermission(Permission);
+        var hasRole = string.IsNullOrEmpty(Role) || UserContextService.HasRole(Role);
+
+        if (!hasPermission)
+        {
+            IsDisabled = true;
+            DisabledReason = $"Missing permission: {Permission}";
+        }
+        else if (!hasRole)
+        {
+            IsDisabled = true;
+            DisabledReason = $"Missing role: {Role}";
+        }
+        else
+        {
+            IsDisabled = false;
+            DisabledReason = string.Empty;
+        }
+    }
+}

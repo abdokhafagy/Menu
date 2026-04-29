@@ -1,0 +1,18 @@
+<MudCard Class="menu-skeleton-card" Elevation="0">
+    <div class="menu-skeleton-card__image skeleton-shimmer" />
+    <MudCardContent Class="pa-4">
+        <MudStack Spacing="2">
+            <MudSkeleton Height="22px" Width="70%" Class="skeleton-shimmer" />
+            <MudSkeleton Height="14px" Width="95%" Class="skeleton-shimmer" />
+            <MudSkeleton Height="14px" Width="80%" Class="skeleton-shimmer" />
+            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-2">
+                <MudSkeleton Height="20px" Width="30%" Class="skeleton-shimmer" />
+                <MudSkeleton Height="28px" Width="25%" Class="skeleton-shimmer" />
+            </MudStack>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public int Index { get; set; }
+}

@@ -15,6 +15,30 @@ public record PublicMenuDto(
     Guid Id,
     string Name);
 
+// ═══ Menu summary (lightweight read model) ═══
+public record PublicMenuSummaryDto(
+    Guid Id,
+    string Name,
+    List<PublicCategoryMenuSummaryDto> Categories);
+
+public record PublicCategoryMenuSummaryDto(
+    Guid Id,
+    string Name,
+    string? NameAr,
+    int DisplayOrder,
+    List<PublicMenuItemSummaryDto> Items);
+
+public record PublicMenuItemSummaryDto(
+    Guid Id,
+    string Name,
+    string? NameAr,
+    decimal Price,
+    string? ImageUrl,
+    bool IsAvailable,
+    bool IsPopular,
+    bool IsNew,
+    int DisplayOrder);
+
 // ═══ Category ═══
 public record PublicCategoryDto(
     Guid Id,

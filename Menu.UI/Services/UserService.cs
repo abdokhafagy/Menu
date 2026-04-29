@@ -15,4 +15,9 @@ public sealed class UserService : CrudServiceBase<UserDto, CreateUserRequest, Up
     {
         return await _api.GetAsync<IReadOnlyList<string>>($"api/users/{userId}/roles", null, ct) ?? Array.Empty<string>();
     }
+
+    public Task<string?> AssignRolesAsync(Guid userId, AssignRolesRequest request, CancellationToken ct = default)
+    {
+        return _api.PostStringAsync($"api/users/{userId}/roles", request, ct);
+    }
 }
