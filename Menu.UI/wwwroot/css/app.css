@@ -786,30 +786,6 @@ html[dir="rtl"] .entity-actions {
         font-size: 0.68rem;
         padding: 0.4rem 0.2rem;
     }
-
-    .entity-table {
-        width: 100%;
-    }
-
-    .entity-table .mud-table-container {
-        display: block;
-        width: 100%;
-        overflow-x: auto !important;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .entity-table .mud-table-root {
-        width: max-content;
-        min-width: 100%;
-        table-layout: auto;
-        border-collapse: separate;
-    }
-
-    .entity-table .mud-table-root th,
-    .entity-table .mud-table-root td {
-        white-space: nowrap;
-    }
 }
 
 @keyframes fade-in {

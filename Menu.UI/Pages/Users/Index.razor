@@ -17,7 +17,7 @@
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable Class="entity-table" @ref="_table" T="UserDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" Breakpoint="Breakpoint.None" @ref="_table" T="UserDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
             <MudTh>@L["Users.Username"]</MudTh>
             <MudTh>@L["Users.Email"]</MudTh>

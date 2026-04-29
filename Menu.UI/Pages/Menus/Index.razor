@@ -15,7 +15,7 @@
 </PageHeader>
 
 <MudPaper Class="panel pa-4">
-    <MudTable Class="entity-table" @ref="_table" T="MenuDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
+    <MudTable Class="entity-table" Breakpoint="Breakpoint.None" @ref="_table" T="MenuDto" ServerData="LoadServerData" Dense="true" Hover="true" Loading="_loading" RowsPerPage="10">
         <HeaderContent>
             <MudTh>@L["Menus.Name"]</MudTh>
             <MudTh>@L["Menus.Restaurant"]</MudTh>
