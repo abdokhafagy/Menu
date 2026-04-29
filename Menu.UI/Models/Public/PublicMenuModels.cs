@@ -29,6 +29,8 @@ public record PublicMenuItemSummaryDto(
     Guid Id,
     string Name,
     string? NameAr,
+    string? Description,
+    string? DescriptionAr,
     decimal Price,
     string? ImageUrl,
     bool IsAvailable,

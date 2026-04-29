@@ -49,6 +49,13 @@
                 </MudText>
             </div>
         </div>
+
+        @if (!string.IsNullOrWhiteSpace(GetItemDescription()))
+        {
+            <MudText Typo="Typo.body2" Class="menu-item-card__description">
+                @(GetItemDescription())
+            </MudText>
+        }
     </MudCardContent>
 
     <MudCardActions Class="menu-item-card__actions pa-3 pt-0">
@@ -110,6 +117,11 @@
         => AppState.Culture == "ar" && !string.IsNullOrWhiteSpace(Item.NameAr)
             ? Item.NameAr
             : Item.Name;
+
+    private string? GetItemDescription()
+        => AppState.Culture == "ar" && !string.IsNullOrWhiteSpace(Item.DescriptionAr)
+            ? Item.DescriptionAr
+            : Item.Description;
 
     private string GetFormattedPrice() => $"{Item.Price:N2}";
 
