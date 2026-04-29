@@ -1,44 +1,106 @@
 @namespace Menu.UI.Components
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Menu.UI.SharedResources> L
 @inject Menu.UI.State.UserContextService UserContext
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 @{
-    var items = NavigationFilter.VisibleForMobile(UserContext, max: MaxItems);
+    var maxPinned  = _screenNarrow ? 3 : 4;
+    var hasOverflow = _allItems.Count > maxPinned;
+    var pinned      = hasOverflow ? _allItems.Take(maxPinned).ToList() : _allItems;
+    var overflow    = hasOverflow ? _allItems.Skip(maxPinned).ToList()
+                                 : (IReadOnlyList<Navigation.NavItem>)Array.Empty<Navigation.NavItem>();
 }
 
-@if (items.Count > 0)
+@if (_allItems.Count > 0)
 {
-    <MudPaper Class="app-bottom-bar" Elevation="6">
-        <MudNavMenu Class="app-bottom-bar__nav">
-            @foreach (var item in items)
+    <MudPaper Class="app-bottom-bar" Elevation="6" Square="true">
+        <nav class="app-bottom-bar__nav" aria-label="Mobile navigation">
+            @foreach (var item in pinned)
             {
-                <MudNavLink Href="@item.Route"
-                            Match="@item.Match"
-                            Icon="@item.Icon">
-                    @L[item.TitleKey]
-                </MudNavLink>
+                <IconNavItem Title="@L[item.TitleKey]"
+                             Icon="@item.Icon"
+                             Href="@item.Route"
+                             Match="@item.Match" />
             }
-        </MudNavMenu>
+
+            @if (hasOverflow)
+            {
+                <IconNavItem Title="@L["Common.More"]"
+                             Icon="@Icons.Material.Filled.MoreHoriz"
+                             OnClick="ToggleOverflow" />
+            }
+        </nav>
     </MudPaper>
+
+    @if (hasOverflow)
+    {
+        @* Backdrop *@
+        @if (_overflowOpen)
+        {
+            <div class="bottom-sheet-backdrop" @onclick="CloseOverflow"></div>
+        }
+
+        @* Bottom sheet *@
+        <div class="bottom-sheet @(_overflowOpen ? "bottom-sheet--open" : "")" role="dialog" aria-modal="true">
+            <div class="bottom-sheet__handle"></div>
+            <MudText Typo="Typo.subtitle2" Class="px-4 pt-2 pb-1" Style="color:var(--mud-palette-primary)">
+                @L["Common.More"]
+            </MudText>
+            <MudDivider />
+            <MudNavMenu Class="px-2 py-1">
+                @foreach (var item in overflow)
+                {
+                    <MudNavLink Href="@item.Route"
+                                Match="@item.Match"
+                                Icon="@item.Icon"
+                                OnClick="CloseOverflow">
+                        @L[item.TitleKey]
+                    </MudNavLink>
+                }
+            </MudNavMenu>
+        </div>
+    }
 }
 
 @code {
-    /// <summary>Maximum number of bottom-nav items to render. Mobile UX caps at 5.</summary>
-    [Parameter] public int MaxItems { get; set; } = 5;
+    // ── State ──────────────────────────────────────────────────────────────
+    private bool _overflowOpen;
+    private bool _screenNarrow;          // true when viewport < 400 px
+    private IReadOnlyList<Navigation.NavItem> _allItems = Array.Empty<Navigation.NavItem>();
 
+    // ── Lifecycle ──────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         UserContext.OnContextChanged += HandleContextChanged;
+        RefreshCache();
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            var w = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
+            _screenNarrow = w < 400;
+            StateHasChanged();
+        }
+        catch { /* graceful fallback — keep default false */ }
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    private void RefreshCache()
+        => _allItems = Navigation.NavigationFilter.Get(UserContext);
 
     private void HandleContextChanged()
     {
+        RefreshCache();
         InvokeAsync(StateHasChanged);
     }
 
+    private void ToggleOverflow() => _overflowOpen = !_overflowOpen;
+    private void CloseOverflow()  => _overflowOpen = false;
+
     public void Dispose()
-    {
-        UserContext.OnContextChanged -= HandleContextChanged;
-    }
+        => UserContext.OnContextChanged -= HandleContextChanged;
 }

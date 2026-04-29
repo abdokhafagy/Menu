@@ -1,0 +1,6 @@
+- [x] Update NavItem model (`Menu.UI/Navigation/NavItem.cs`)
+- [x] Fix `AppNavigation.cs` to explicitly assign priorities
+- [x] Create clean `IconNavItem.razor` component
+- [x] Update `NavigationFilter.cs` logic to return unfiltered mobile items sorted by Priority
+- [x] Implement robust responsive `BottomNav.razor` with dynamic overflow and animated bottom sheet
+- [x] Clean CSS styling in `app.css` and inject translation keys

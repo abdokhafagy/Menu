@@ -15,21 +15,21 @@ public sealed record NavItem(
     string[] RequiredPermissions,
     NavLinkMatch Match = NavLinkMatch.Prefix,
     NavSection Section = NavSection.Management,
-    bool ShowOnMobile = false,
-    int MobilePriority = 100,
+    bool ShowOnMobile = true,
+    int Priority = 0,
     bool RequireAuthenticated = true)
 {
-    public static NavItem Public(string titleKey, string icon, string route, NavSection section = NavSection.Overview, bool showOnMobile = false, int mobilePriority = 100, NavLinkMatch match = NavLinkMatch.Prefix)
-        => new(titleKey, icon, route, Array.Empty<string>(), Array.Empty<string>(), match, section, showOnMobile, mobilePriority, RequireAuthenticated: false);
+    public static NavItem Public(string titleKey, string icon, string route, NavSection section = NavSection.Overview, bool showOnMobile = true, int priority = 0, NavLinkMatch match = NavLinkMatch.Prefix)
+        => new(titleKey, icon, route, Array.Empty<string>(), Array.Empty<string>(), match, section, showOnMobile, priority, RequireAuthenticated: false);
 
-    public static NavItem Authenticated(string titleKey, string icon, string route, NavSection section = NavSection.Overview, bool showOnMobile = false, int mobilePriority = 100, NavLinkMatch match = NavLinkMatch.Prefix)
-        => new(titleKey, icon, route, Array.Empty<string>(), Array.Empty<string>(), match, section, showOnMobile, mobilePriority, RequireAuthenticated: true);
+    public static NavItem Authenticated(string titleKey, string icon, string route, NavSection section = NavSection.Overview, bool showOnMobile = true, int priority = 0, NavLinkMatch match = NavLinkMatch.Prefix)
+        => new(titleKey, icon, route, Array.Empty<string>(), Array.Empty<string>(), match, section, showOnMobile, priority, RequireAuthenticated: true);
 
-    public static NavItem ByPermission(string titleKey, string icon, string route, string permission, NavSection section = NavSection.Management, bool showOnMobile = false, int mobilePriority = 100, NavLinkMatch match = NavLinkMatch.Prefix)
-        => new(titleKey, icon, route, Array.Empty<string>(), new[] { permission }, match, section, showOnMobile, mobilePriority, RequireAuthenticated: true);
+    public static NavItem ByPermission(string titleKey, string icon, string route, string permission, NavSection section = NavSection.Management, bool showOnMobile = true, int priority = 0, NavLinkMatch match = NavLinkMatch.Prefix)
+        => new(titleKey, icon, route, Array.Empty<string>(), new[] { permission }, match, section, showOnMobile, priority, RequireAuthenticated: true);
 
-    public static NavItem ByRole(string titleKey, string icon, string route, string role, NavSection section = NavSection.Management, bool showOnMobile = false, int mobilePriority = 100, NavLinkMatch match = NavLinkMatch.Prefix)
-        => new(titleKey, icon, route, new[] { role }, Array.Empty<string>(), match, section, showOnMobile, mobilePriority, RequireAuthenticated: true);
+    public static NavItem ByRole(string titleKey, string icon, string route, string role, NavSection section = NavSection.Management, bool showOnMobile = true, int priority = 0, NavLinkMatch match = NavLinkMatch.Prefix)
+        => new(titleKey, icon, route, new[] { role }, Array.Empty<string>(), match, section, showOnMobile, priority, RequireAuthenticated: true);
 }
 
 public enum NavSection

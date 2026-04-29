@@ -2,6 +2,7 @@ using System.Globalization;
 
 using Blazored.LocalStorage;
 
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 using MudBlazor;
@@ -15,12 +16,14 @@ public sealed class AppState
 
     private readonly ILocalStorageService _localStorage;
     private readonly IJSRuntime _jsRuntime;
+    private readonly NavigationManager _navigationManager;
     private bool _isInitialized;
 
-    public AppState(ILocalStorageService localStorage, IJSRuntime jsRuntime)
+    public AppState(ILocalStorageService localStorage, IJSRuntime jsRuntime, NavigationManager navigationManager)
     {
         _localStorage = localStorage;
         _jsRuntime = jsRuntime;
+        _navigationManager = navigationManager;
     }
 
     public event Action? OnChange;
@@ -84,7 +87,8 @@ public sealed class AppState
             Culture = "en";
         }
 
-        ApplyCulture(Culture);
+        // Culture is already applied to CultureInfo statics in Program.Main before RunAsync.
+        // Here we only sync the document direction and notify subscribers.
         await ApplyLanguageDirectionAsync();
         NotifyStateChanged();
     }
@@ -113,40 +117,31 @@ public sealed class AppState
     public async Task SetCultureAsync(string culture)
     {
         var normalizedCulture = NormalizeCulture(culture);
-        var hasChanged = !string.Equals(Culture, normalizedCulture, StringComparison.Ordinal);
-
-        Culture = normalizedCulture;
-        ApplyCulture(Culture);
+        if (string.Equals(Culture, normalizedCulture, StringComparison.Ordinal))
+        {
+            return;
+        }
 
         try
         {
-            await _localStorage.SetItemAsync(CultureStorageKey, Culture);
+            await _localStorage.SetItemAsync(CultureStorageKey, normalizedCulture);
         }
         catch
         {
-            // Ignore persistence failures and keep in-memory state.
+            // If persistence fails we cannot guarantee a correct reload, so abort.
+            return;
         }
 
-        await ApplyLanguageDirectionAsync();
-
-        if (hasChanged)
-        {
-            NotifyStateChanged();
-        }
+        // Force a full app reboot so:
+        //  - Program.Main re-reads localStorage and sets CultureInfo before any component renders
+        //  - Every IStringLocalizer<T> instance is recreated under the new UICulture
+        //  - MudBlazor's internal text and any cached strings are refreshed
+        _navigationManager.NavigateTo(_navigationManager.Uri, forceLoad: true);
     }
 
     private static string NormalizeCulture(string? culture)
     {
         return culture?.StartsWith("ar", StringComparison.OrdinalIgnoreCase) == true ? "ar" : "en";
-    }
-
-    private static void ApplyCulture(string culture)
-    {
-        var cultureInfo = CultureInfo.GetCultureInfo(culture);
-        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-        CultureInfo.CurrentCulture = cultureInfo;
-        CultureInfo.CurrentUICulture = cultureInfo;
     }
 
     private async Task ApplyLanguageDirectionAsync()

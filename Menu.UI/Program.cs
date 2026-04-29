@@ -1,4 +1,4 @@
-using Blazored.LocalStorage;
+﻿using Blazored.LocalStorage;
 
 using Menu.UI.Auth;
 
@@ -82,7 +82,39 @@ namespace Menu.UI
 
             builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-            await builder.Build().RunAsync();
+            var host = builder.Build();
+
+            // Resolve the user's saved culture BEFORE the first render so IStringLocalizer
+            // and every component get the correct CultureInfo on their initial pass.
+            await ApplyInitialCultureAsync(host.Services);
+
+            await host.RunAsync();
+        }
+
+        private static async Task ApplyInitialCultureAsync(IServiceProvider services)
+        {
+            const string CultureStorageKey = "menu.ui.culture";
+            string cultureName = "en";
+
+            try
+            {
+                var localStorage = services.GetRequiredService<Blazored.LocalStorage.ILocalStorageService>();
+                var saved = await localStorage.GetItemAsync<string?>(CultureStorageKey);
+                if (!string.IsNullOrWhiteSpace(saved))
+                {
+                    cultureName = saved.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? "ar" : "en";
+                }
+            }
+            catch
+            {
+                // localStorage unavailable on first boot or in pre-render; fall back to default.
+            }
+
+            var culture = CultureInfo.GetCultureInfo(cultureName);
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
         }
     }
 }

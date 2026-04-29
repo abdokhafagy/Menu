@@ -1,0 +1,63 @@
+@namespace Menu.UI.Components
+@implements IDisposable
+@inject NavigationManager NavigationManager
+
+<div class="icon-nav-item @(IsActive ? "icon-nav-item--active" : "")">
+    <MudTooltip Text="@Title" Placement="Placement.Top" Arrow="true">
+        @if (!string.IsNullOrEmpty(Href))
+        {
+            <a href="@Href" class="icon-nav-btn mud-ripple" @onclick:preventDefault="false">
+                <MudIcon Icon="@Icon" Size="Size.Medium" />
+            </a>
+        }
+        else
+        {
+            <button type="button" class="icon-nav-btn mud-ripple" @onclick="OnClick">
+                <MudIcon Icon="@Icon" Size="Size.Medium" />
+            </button>
+        }
+    </MudTooltip>
+</div>
+
+@code {
+    [Parameter] public string Title  { get; set; } = string.Empty;
+    [Parameter] public string Icon   { get; set; } = string.Empty;
+    [Parameter] public string? Href  { get; set; }
+    [Parameter] public Microsoft.AspNetCore.Components.Routing.NavLinkMatch Match { get; set; }
+        = Microsoft.AspNetCore.Components.Routing.NavLinkMatch.Prefix;
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    private bool IsActive => ComputeActive();
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender,
+        Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs _)
+        => InvokeAsync(StateHasChanged);
+
+    private bool ComputeActive()
+    {
+        if (string.IsNullOrWhiteSpace(Href)) return false;
+
+        var current = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var target  = Href.TrimStart('/');
+
+        if (Match == Microsoft.AspNetCore.Components.Routing.NavLinkMatch.All)
+            return string.Equals(current, target, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(current, target + "/", StringComparison.OrdinalIgnoreCase);
+
+        return current.StartsWith(target, StringComparison.OrdinalIgnoreCase)
+            && (current.Length == target.Length
+                || target.Length == 0
+                || current[target.Length] == '/'
+                || current[target.Length] == '?');
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

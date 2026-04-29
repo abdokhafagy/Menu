@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(xxd 'D:\\\\Projects\\\\Menu Management\\\\Menu\\\\Menu.UI\\\\Resources\\\\SharedResources.ar.resx')",
+      "Bash(xxd)",
+      "Bash(python *)"
+    ]
+  }
+}
